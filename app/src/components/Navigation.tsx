@@ -12,7 +12,7 @@ interface NavigationProps {
 
 export function Navigation({ sections }: NavigationProps) {
   const pathname = usePathname();
-  const { isCompleted, isAuthenticated, completedCount, isSessionLoading } = useProgress();
+  const { isCompleted, isAuthenticated, completedCount } = useProgress();
   const [expandedParts, setExpandedParts] = useState<Set<number>>(() => {
     // 現在のパスに対応する部を開いた状態にする
     const initialExpanded = new Set<number>();
@@ -49,19 +49,8 @@ export function Navigation({ sections }: NavigationProps) {
 
   return (
     <nav className="space-y-2">
-      {/* 進捗サマリー */}
-      {isSessionLoading ? (
-        // セッション読み込み中はスケルトン表示
-        <div className="mb-4 p-3 bg-gray-100 rounded-lg animate-pulse">
-          <div className="flex justify-between items-center mb-2">
-            <div className="h-4 bg-gray-200 rounded w-16" />
-            <div className="h-4 bg-gray-200 rounded w-10" />
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2" />
-          <div className="h-3 bg-gray-200 rounded w-14 mt-1" />
-        </div>
-      ) : isAuthenticated ? (
-        // ログイン時は進捗表示
+      {/* 進捗サマリー（ログイン時のみ表示） */}
+      {isAuthenticated && (
         <div className="mb-4 p-3 bg-blue-50 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-blue-900">学習進捗</span>
@@ -75,7 +64,7 @@ export function Navigation({ sections }: NavigationProps) {
           </div>
           <p className="text-xs text-blue-600 mt-1">{progressPercent}% 完了</p>
         </div>
-      ) : null}
+      )}
 
       {sections.map((section) => (
         <div key={section.part} className="border-b border-gray-200 pb-2">

@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import type { Session } from 'next-auth';
 import { UserMenu } from './UserMenu';
 import { SearchDialog, SearchButton } from './SearchDialog';
 
-export function Header() {
+interface HeaderProps {
+  session: Session | null;
+}
+
+export function Header({ session }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Cmd+K で検索ダイアログを開く
@@ -41,7 +46,7 @@ export function Header() {
             >
               用語集
             </Link>
-            <UserMenu />
+            <UserMenu initialSession={session} />
           </nav>
 
           {/* モバイルナビゲーション */}
@@ -65,7 +70,7 @@ export function Header() {
                 />
               </svg>
             </button>
-            <UserMenu />
+            <UserMenu initialSession={session} />
           </div>
         </div>
       </header>

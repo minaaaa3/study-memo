@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { getServerSession } from 'next-auth';
 import './globals.css';
 import { Navigation, MobileNavigation } from '@/components/Navigation';
 import { getAllDocsWithContent } from '@/lib/docs';
 import { buildNavigation } from '@/lib/navigation';
+import { authOptions } from '@/lib/auth';
 import { Providers } from '@/components/Providers';
 import { Header } from '@/components/Header';
 import { SearchProvider } from '@/contexts/SearchContext';
@@ -40,13 +42,14 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const docs = getAllDocsWithContent();
   const navSections = buildNavigation(docs);
+  const session = await getServerSession(authOptions);
 
   return (
     <html lang="ja">
@@ -56,12 +59,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        <Providers>
+        <Providers session={session}>
           <SearchProvider navSections={navSections}>
             <PWARegister />
 
             {/* ヘッダー */}
-            <Header />
+            <Header session={session} />
 
             <div className="max-w-7xl mx-auto flex">
               {/* サイドバー（デスクトップ） */}
