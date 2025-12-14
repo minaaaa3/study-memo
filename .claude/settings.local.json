@@ -4,7 +4,12 @@
       "Bash(mkdir:*)",
       "Bash(grep:*)",
       "Bash(npx create-next-app:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(pkill:*)",
+      "Bash(pnpm install)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }
