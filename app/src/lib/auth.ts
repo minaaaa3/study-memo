@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     // GitHub OAuth (環境変数が設定されている場合のみ有効)
     ...(process.env.GITHUB_ID && process.env.GITHUB_SECRET
