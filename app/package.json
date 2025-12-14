@@ -9,7 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "gray-matter": "^4.0.3",
     "next": "16.0.10",
+    "next-mdx-remote": "^5.0.0",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
