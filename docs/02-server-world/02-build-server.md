@@ -452,7 +452,3 @@ curl -X DELETE http://localhost:3000/api/users/1
 - **環境変数**: 設定をコードの外に出す仕組み
 - **CRUD**: Create（POST）、Read（GET）、Update（PUT）、Delete（DELETE）
 
-## 次の章へ
-
-サーバーが1台だけで完結することは稀です。複数のサーバーがどう連携するか？
-→ [2-3. サーバー間の通信（Pull型）](./03-pull-communication.md)

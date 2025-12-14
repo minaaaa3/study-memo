@@ -1,5 +1,8 @@
 import type { MDXComponents as MDXComponentsType } from 'mdx/types';
 import { CodeBlock } from './CodeBlock';
+import { WhyButton, Concept } from './WhyButton';
+import { ComparisonTable, SimpleComparison } from './ComparisonTable';
+import { Mermaid } from './Mermaid';
 import Link from 'next/link';
 
 // Markdown内のリンクをNext.jsのLinkに変換
@@ -43,10 +46,29 @@ function CustomLink({
   );
 }
 
+// コードからテキストを抽出するヘルパー関数
+function extractTextFromCode(children: React.ReactNode): string {
+  if (typeof children === 'string') return children;
+  if (Array.isArray(children)) {
+    return children.map(extractTextFromCode).join('');
+  }
+  if (children && typeof children === 'object' && 'props' in children) {
+    const element = children as React.ReactElement<{ children?: React.ReactNode }>;
+    return extractTextFromCode(element.props.children);
+  }
+  return '';
+}
+
 // preタグの処理
 // rehype-pretty-codeで処理されたものはそのまま表示（シンタックスハイライト付き）
 // それ以外はCodeBlockで処理
 function CustomPre({ children, ...props }: React.HTMLAttributes<HTMLPreElement> & { 'data-language'?: string }) {
+  // Mermaid図の場合は特別に処理
+  if (props['data-language'] === 'mermaid') {
+    const code = extractTextFromCode(children);
+    return <Mermaid chart={code} />;
+  }
+
   // rehype-pretty-codeで処理されたコードブロック（data-language属性がある）
   // シンタックスハイライト付きでそのまま表示
   if (props['data-language']) {
@@ -72,6 +94,12 @@ function CustomPre({ children, ...props }: React.HTMLAttributes<HTMLPreElement> 
       className?: string;
       'data-language'?: string;
     };
+
+    // Mermaid図の場合
+    if (codeProps['data-language'] === 'mermaid' || codeProps.className?.includes('language-mermaid')) {
+      const code = extractTextFromCode(codeProps.children);
+      return <Mermaid chart={code} />;
+    }
 
     // rehype-pretty-codeで処理済みの場合はそのまま
     if (codeProps['data-language']) {
@@ -315,4 +343,11 @@ export const mdxComponents: MDXComponentsType = {
       {children}
     </em>
   ),
+
+  // Phase 4: 追加コンポーネント
+  WhyButton,
+  Concept,
+  ComparisonTable,
+  SimpleComparison,
+  Mermaid,
 };

@@ -291,6 +291,3 @@ const mutation = useMutation({
 2. TanStack Queryに書き換える
 3. キャッシュの動作を確認する
 
-## 次の章へ
-
-→ [6-4. フォームを作る](./04-form.md)

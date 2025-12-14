@@ -248,13 +248,17 @@ export default function UserPage({ user }) {
 
 ## 比較まとめ
 
-| 方式 | 初回表示 | ページ遷移 | SEO | 複雑さ |
-|------|---------|-----------|-----|-------|
-| 静的サイト | 速い | 遅い | 良い | 低い |
-| 動的サイト | 普通 | 遅い | 良い | 中程度 |
-| SPA | 遅い | 速い | 難しい | 高い |
-| SSR | 速い | 速い | 良い | 高い |
-| SSG | 最速 | 速い | 良い | 中〜高 |
+<ComparisonTable
+  title="Webアプリ方式の比較"
+  items={['静的サイト', '動的サイト', 'SPA', 'SSR', 'SSG']}
+  criteria={['初回表示', 'ページ遷移', 'SEO', '実装の複雑さ']}
+  data={{
+    '初回表示': { '静的サイト': 'good', '動的サイト': 'fair', 'SPA': 'poor', 'SSR': 'good', 'SSG': 'excellent' },
+    'ページ遷移': { '静的サイト': 'poor', '動的サイト': 'poor', 'SPA': 'excellent', 'SSR': 'excellent', 'SSG': 'excellent' },
+    'SEO': { '静的サイト': 'excellent', '動的サイト': 'excellent', 'SPA': 'poor', 'SSR': 'excellent', 'SSG': 'excellent' },
+    '実装の複雑さ': { '静的サイト': 'excellent', '動的サイト': 'good', 'SPA': 'poor', 'SSR': 'poor', 'SSG': 'fair' }
+  }}
+/>
 
 ### 何を選ぶべきか？
 
@@ -331,7 +335,3 @@ Next.jsは強力ですが、銀の弾丸ではありません。
 
 歴史を知ることで「なぜ今の技術があるのか」がわかります。
 
-## 次の部へ
-
-Webの全体像がわかったところで、サーバーの世界を詳しく見ていきましょう。
-→ [第2部: サーバーの世界](../02-server-world/01-what-is-server.md)

@@ -1,6 +1,7 @@
 'use client';
 
 import { Sandpack } from '@codesandbox/sandpack-react';
+import { Mermaid } from './Mermaid';
 
 // Sandpackで実行可能な言語
 const SANDPACK_LANGUAGES = ['jsx', 'tsx', 'javascript', 'typescript', 'js', 'ts'];
@@ -90,6 +91,11 @@ export function CodeBlock({ children, className }: CodeBlockProps) {
       </pre>
     </div>
   );
+
+  // Mermaid図の場合
+  if (language === 'mermaid') {
+    return <Mermaid chart={code} />;
+  }
 
   // Sandpackで実行不可能な言語はシンプルなコードブロックを表示
   if (!isExecutable(language)) {

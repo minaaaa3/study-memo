@@ -389,6 +389,3 @@ function TodoList() {
 2. Zustandに書き換える
 3. どちらが管理しやすいか比較する
 
-## 次の章へ
-
-→ [6-3. APIクライアントを作る](./03-api-client.md)

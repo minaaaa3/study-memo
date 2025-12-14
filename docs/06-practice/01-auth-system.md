@@ -314,6 +314,3 @@ export function LoginButton() {
 2. NextAuth.jsでGoogleログインを実装してみる
 3. 両方のCookieの中身を比較してみる
 
-## 次の章へ
-
-→ [6-2. 状態管理を実装する](./02-state-management.md)

@@ -328,7 +328,3 @@ el.textContent = userInput;  // 安全（HTMLとして解釈されない）
 - **仮想DOM** = 差分だけDOMを更新する仕組み
 - **Reactなどを使う理由** = データとUIの同期を自動化
 
-## 次の章へ
-
-UIの「状態」をどう管理する？
-→ [4-2. 状態管理](./02-state-management.md)

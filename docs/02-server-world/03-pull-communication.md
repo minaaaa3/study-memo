@@ -332,15 +332,24 @@ message User {
 
 ## 比較まとめ
 
-| 特徴 | REST | GraphQL | gRPC |
-|------|------|---------|------|
-| 思想 | リソース指向 | クエリ指向 | アクション指向 |
-| データ形式 | JSON | JSON | Protocol Buffers |
-| オーバーフェッチ | 起きやすい | 起きにくい | 起きにくい |
-| 学習コスト | 低い | 中程度 | 高い |
-| キャッシュ | 簡単 | 難しい | 難しい |
-| ブラウザ対応 | そのまま | そのまま | 追加設定必要 |
-| 主な用途 | 一般的なAPI | 複雑なデータ取得 | サービス間通信 |
+<ComparisonTable
+  title="API方式の比較"
+  items={['REST', 'GraphQL', 'gRPC']}
+  criteria={['設計思想', 'データ形式', 'オーバーフェッチ', '学習コスト', 'キャッシュ', 'ブラウザ対応']}
+  data={{
+    '設計思想': { 'REST': 'リソース指向', 'GraphQL': 'クエリ指向', 'gRPC': 'アクション指向' },
+    'データ形式': { 'REST': 'JSON', 'GraphQL': 'JSON', 'gRPC': 'Protocol Buffers' },
+    'オーバーフェッチ': { 'REST': 'fair', 'GraphQL': 'excellent', 'gRPC': 'excellent' },
+    '学習コスト': { 'REST': 'excellent', 'GraphQL': 'good', 'gRPC': 'fair' },
+    'キャッシュ': { 'REST': 'excellent', 'GraphQL': 'fair', 'gRPC': 'fair' },
+    'ブラウザ対応': { 'REST': 'excellent', 'GraphQL': 'excellent', 'gRPC': 'poor' }
+  }}
+/>
+
+**主な用途:**
+- **REST**: 一般的なAPI（外部公開、シンプルなCRUD）
+- **GraphQL**: 複雑なデータ取得（関連データを柔軟に取得）
+- **gRPC**: サービス間通信（マイクロサービス、パフォーマンス重視）
 
 ### 選び方
 
@@ -385,7 +394,3 @@ message User {
 - **RPC** = アクション指向。関数呼び出しの感覚
 - **選び方** = 用途に合わせて選ぶ。「これが正解」はない
 
-## 次の章へ
-
-「クライアントから問い合わせる」のではなく、「サーバーから通知が来る」パターンは？
-→ [2-4. サーバー間の通信（Push型）](./04-push-communication.md)

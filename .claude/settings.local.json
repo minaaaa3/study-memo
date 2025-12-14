@@ -18,7 +18,8 @@
       "Bash(cat:*)",
       "Bash(pnpm remove:*)",
       "Bash(curl:*)",
-      "Bash(node /Users/inouechiharu/Desktop/study-memo/app/scripts/generate-icons.mjs:*)"
+      "Bash(node /Users/inouechiharu/Desktop/study-memo/app/scripts/generate-icons.mjs:*)",
+      "Bash(node:*)"
     ]
   }
 }

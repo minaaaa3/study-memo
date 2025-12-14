@@ -35,15 +35,6 @@ export function Header() {
           {/* デスクトップナビゲーション */}
           <nav className="hidden md:flex items-center space-x-4">
             <SearchButton onClick={() => setIsSearchOpen(true)} />
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
-              ホーム
-            </Link>
-            <Link
-              href="/docs/01-web-basics/01-what-is-web"
-              className="text-gray-600 hover:text-gray-900"
-            >
-              学習を始める
-            </Link>
             <Link
               href="/glossary"
               className="text-gray-600 hover:text-gray-900"

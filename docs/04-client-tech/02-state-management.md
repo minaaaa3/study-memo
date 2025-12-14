@@ -384,7 +384,3 @@ function MyComponent() {
 - **TanStack Query** = サーバー状態に
 - **選び方** = 規模と用途に合わせて
 
-## 次の章へ
-
-SPAでページ遷移をどう実現する？
-→ [4-3. ルーティング](./03-routing.md)

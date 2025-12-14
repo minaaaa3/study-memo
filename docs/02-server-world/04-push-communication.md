@@ -195,13 +195,18 @@ eventSource.onerror = (error) => {
 
 ### WebSocketとの使い分け
 
-| 特徴 | WebSocket | SSE |
-|------|-----------|-----|
-| 方向 | 双方向 | サーバー→クライアント |
-| プロトコル | 独自 | HTTP |
-| 再接続 | 手動実装 | 自動 |
-| バイナリ | 対応 | テキストのみ |
-| 用途 | チャット、ゲーム | 通知、ダッシュボード更新 |
+<SimpleComparison
+  title="WebSocket vs SSE"
+  itemA="WebSocket"
+  itemB="SSE"
+  comparisons={[
+    { aspect: '通信方向', a: '双方向', b: 'サーバー→クライアント' },
+    { aspect: 'プロトコル', a: '独自プロトコル', b: 'HTTP' },
+    { aspect: '再接続', a: '手動実装が必要', b: '自動再接続' },
+    { aspect: 'バイナリデータ', a: '対応', b: 'テキストのみ' },
+    { aspect: '主な用途', a: 'チャット、ゲーム', b: '通知、ダッシュボード' }
+  ]}
+/>
 
 ---
 
@@ -425,13 +430,16 @@ subscriber.on('message', (channel, message) => {
 
 ## 比較まとめ
 
-| 方式 | 方向 | 用途 | 特徴 |
-|------|------|------|------|
-| WebSocket | 双方向 | リアルタイム | 接続維持、チャット向き |
-| SSE | サーバー→クライアント | 通知 | シンプル、HTTP |
-| Webhook | サーバー→サーバー | イベント通知 | 外部サービス連携 |
-| Message Queue | 非同期 | バックグラウンド処理 | 重い処理を後回し |
-| Pub/Sub | 1対多 | イベント配信 | 複数システムに通知 |
+<ComparisonTable
+  title="Push型通信の比較"
+  items={['WebSocket', 'SSE', 'Webhook', 'Message Queue', 'Pub/Sub']}
+  criteria={['通信方向', '主な用途', 'リアルタイム性']}
+  data={{
+    '通信方向': { 'WebSocket': '双方向', 'SSE': 'サーバー→クライアント', 'Webhook': 'サーバー→サーバー', 'Message Queue': '非同期', 'Pub/Sub': '1対多' },
+    '主な用途': { 'WebSocket': 'チャット、ゲーム', 'SSE': '通知、更新', 'Webhook': '外部連携', 'Message Queue': '重い処理', 'Pub/Sub': 'イベント配信' },
+    'リアルタイム性': { 'WebSocket': 'excellent', 'SSE': 'excellent', 'Webhook': 'good', 'Message Queue': 'fair', 'Pub/Sub': 'good' }
+  }}
+/>
 
 ---
 
@@ -466,7 +474,3 @@ Pub/Sub:
 - **Message Queue** = 非同期処理のためのキュー
 - **Pub/Sub** = 1対多のメッセージ配信
 
-## 次の章へ
-
-サーバーはデータをどこに保存する？データベースの基礎へ。
-→ [2-5. データベースとの連携](./05-database.md)
