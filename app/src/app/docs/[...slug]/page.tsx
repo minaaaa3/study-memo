@@ -7,6 +7,7 @@ import { getDocBySlug, getAllDocSlugs, getAdjacentDocs } from '@/lib/docs';
 import { mdxComponents } from '@/components/MDXComponents';
 import { ProgressToggle } from '@/components/ProgressToggle';
 import { QuizSection } from '@/components/QuizSection';
+import { DocContent } from '@/components/DocContent';
 
 // シンタックスハイライトの設定
 const rehypePrettyCodeOptions = {
@@ -65,18 +66,20 @@ export default async function DocPage({ params }: PageProps) {
       </nav>
 
       {/* 本文 */}
-      <div className="prose prose-gray max-w-none">
-        <MDXRemote
-          source={doc.content}
-          components={mdxComponents}
-          options={{
-            mdxOptions: {
-              remarkPlugins: [remarkGfm],
-              rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
-            },
-          }}
-        />
-      </div>
+      <DocContent slug={slug.join('/')}>
+        <div className="prose prose-gray max-w-none">
+          <MDXRemote
+            source={doc.content}
+            components={mdxComponents}
+            options={{
+              mdxOptions: {
+                remarkPlugins: [remarkGfm],
+                rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
+              },
+            }}
+          />
+        </div>
+      </DocContent>
 
       {/* 進捗チェック */}
       <div className="mt-8">

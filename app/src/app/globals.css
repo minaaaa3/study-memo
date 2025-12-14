@@ -235,3 +235,35 @@ code[data-line-numbers] > [data-line]::before {
 [data-highlighted-line] {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Annotation highlight styles */
+.annotation-highlight {
+  padding: 0.125rem 0;
+  border-radius: 0.125rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.annotation-highlight:hover {
+  filter: brightness(0.9);
+}
+
+.annotation-yellow {
+  background-color: rgb(254 249 195);
+}
+
+.annotation-green {
+  background-color: rgb(187 247 208);
+}
+
+.annotation-blue {
+  background-color: rgb(191 219 254);
+}
+
+.annotation-pink {
+  background-color: rgb(251 207 232);
+}
+
+.annotation-purple {
+  background-color: rgb(233 213 255);
+}
