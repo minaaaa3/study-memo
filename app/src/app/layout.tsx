@@ -10,6 +10,7 @@ import { Providers } from '@/components/Providers';
 import { Header } from '@/components/Header';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { PWARegister } from '@/components/PWARegister';
+import { prisma } from '@/lib/prisma';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -51,6 +52,18 @@ export default async function RootLayout({
   const navSections = buildNavigation(docs);
   const session = await getServerSession(authOptions);
 
+  // ログイン済みの場合は進捗データをサーバーサイドで取得
+  const initialProgress = session?.user?.id
+    ? await prisma.progress.findMany({
+        where: { userId: session.user.id },
+        select: {
+          slug: true,
+          completed: true,
+          completedAt: true,
+        },
+      })
+    : [];
+
   return (
     <html lang="ja">
       <head>
@@ -59,7 +72,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        <Providers session={session}>
+        <Providers session={session} initialProgress={initialProgress}>
           <SearchProvider navSections={navSections}>
             <PWARegister />
 

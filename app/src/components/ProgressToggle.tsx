@@ -9,7 +9,7 @@ interface ProgressToggleProps {
 }
 
 export function ProgressToggle({ slug }: ProgressToggleProps) {
-  const { isCompleted, toggleProgress, isAuthenticated, isLoading } = useProgress();
+  const { isCompleted, toggleProgress, isAuthenticated } = useProgress();
   const [isUpdating, setIsUpdating] = useState(false);
   const completed = isCompleted(slug);
 
@@ -18,16 +18,6 @@ export function ProgressToggle({ slug }: ProgressToggleProps) {
     await toggleProgress(slug, !completed);
     setIsUpdating(false);
   };
-
-  // 進捗読み込み中はスケルトン表示
-  if (isLoading) {
-    return (
-      <div className="flex items-center space-x-2 p-4 bg-gray-50 rounded-lg animate-pulse">
-        <div className="w-6 h-6 bg-gray-200 rounded" />
-        <div className="h-4 bg-gray-200 rounded w-32" />
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
