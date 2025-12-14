@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypePrettyCode from 'rehype-pretty-code';
 import { getDocBySlug, getAllDocSlugs, getAdjacentDocs } from '@/lib/docs';
 import { mdxComponents } from '@/components/MDXComponents';
+import { ProgressToggle } from '@/components/ProgressToggle';
 
 // シンタックスハイライトの設定
 const rehypePrettyCodeOptions = {
@@ -74,6 +75,11 @@ export default async function DocPage({ params }: PageProps) {
             },
           }}
         />
+      </div>
+
+      {/* 進捗チェック */}
+      <div className="mt-8">
+        <ProgressToggle slug={slug.join('/')} />
       </div>
 
       {/* 前後のナビゲーション */}

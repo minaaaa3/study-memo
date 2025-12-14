@@ -9,7 +9,15 @@
       "Bash(pkill:*)",
       "Bash(pnpm install)",
       "Bash(pnpm run build:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm rebuild:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(curl:*)"
     ]
   }
 }
