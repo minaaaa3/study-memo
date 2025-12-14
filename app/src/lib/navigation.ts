@@ -3,6 +3,7 @@ export interface NavItem {
   href: string;
   part: number;
   chapter: number;
+  searchContent?: string; // 検索用コンテンツ
 }
 
 export interface NavSection {
@@ -19,6 +20,7 @@ export function buildNavigation(
     part: number;
     chapter: number;
     partName: string;
+    searchContent?: string;
   }>
 ): NavSection[] {
   const sections = new Map<number, NavSection>();
@@ -37,6 +39,7 @@ export function buildNavigation(
       href: `/docs/${doc.slug.join('/')}`,
       part: doc.part,
       chapter: doc.chapter,
+      searchContent: doc.searchContent,
     });
   }
 

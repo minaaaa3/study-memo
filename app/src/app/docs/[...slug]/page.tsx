@@ -6,6 +6,7 @@ import rehypePrettyCode from 'rehype-pretty-code';
 import { getDocBySlug, getAllDocSlugs, getAdjacentDocs } from '@/lib/docs';
 import { mdxComponents } from '@/components/MDXComponents';
 import { ProgressToggle } from '@/components/ProgressToggle';
+import { QuizSection } from '@/components/QuizSection';
 
 // シンタックスハイライトの設定
 const rehypePrettyCodeOptions = {
@@ -81,6 +82,9 @@ export default async function DocPage({ params }: PageProps) {
       <div className="mt-8">
         <ProgressToggle slug={slug.join('/')} />
       </div>
+
+      {/* 理解度チェッククイズ */}
+      <QuizSection slug={slug.join('/')} />
 
       {/* 前後のナビゲーション */}
       <nav className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200">

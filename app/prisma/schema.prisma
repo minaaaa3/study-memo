@@ -12,17 +12,18 @@ datasource db {
 
 // NextAuth.js required models
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?      @unique
   emailVerified DateTime?
-  password      String?   // For credentials provider
+  password      String?      // For credentials provider
   image         String?
   accounts      Account[]
   sessions      Session[]
   progress      Progress[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  quizResults   QuizResult[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Account {
@@ -74,4 +75,21 @@ model Progress {
 
   @@unique([userId, slug])
   @@index([userId])
+}
+
+// Quiz results model
+model QuizResult {
+  id        String   @id @default(cuid())
+  userId    String
+  slug      String   // e.g., "01-web-basics/01-what-is-web"
+  score     Int      // Number of correct answers
+  total     Int      // Total number of questions
+  answers   Json     // Array of user's answers: { questionId: string, selectedIndex: number, correct: boolean }[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, slug])
 }

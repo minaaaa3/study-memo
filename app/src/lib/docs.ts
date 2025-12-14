@@ -12,6 +12,11 @@ export interface DocMeta {
   partName: string;
 }
 
+export interface DocWithContent extends DocMeta {
+  content: string;
+  searchContent: string; // 検索用のプレーンテキスト
+}
+
 export interface Doc extends DocMeta {
   content: string;
 }
@@ -45,6 +50,28 @@ function extractTitle(content: string): string {
   return match ? match[1] : 'Untitled';
 }
 
+// 検索用のプレーンテキストを抽出（コードブロック、リンク等を除去）
+function extractSearchContent(content: string): string {
+  return content
+    // コードブロックを除去
+    .replace(/```[\s\S]*?```/g, '')
+    // インラインコードを除去
+    .replace(/`[^`]+`/g, '')
+    // リンクからテキストのみ抽出
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // 画像を除去
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    // HTMLタグを除去
+    .replace(/<[^>]+>/g, '')
+    // マークダウン記号を除去
+    .replace(/[#*_~]/g, '')
+    // 連続した空白を1つに
+    .replace(/\s+/g, ' ')
+    .trim()
+    // 検索用に最初の500文字程度を保持（サイズ削減）
+    .slice(0, 500);
+}
+
 // すべてのドキュメントのメタデータを取得
 export function getAllDocs(): DocMeta[] {
   const docs: DocMeta[] = [];
@@ -65,6 +92,37 @@ export function getAllDocs(): DocMeta[] {
       const title = extractTitle(content);
 
       docs.push({ ...meta, title });
+    }
+  }
+
+  // 部 → 章の順でソート
+  return docs.sort((a, b) => {
+    if (a.part !== b.part) return a.part - b.part;
+    return a.chapter - b.chapter;
+  });
+}
+
+// すべてのドキュメントを検索用コンテンツ付きで取得
+export function getAllDocsWithContent(): DocWithContent[] {
+  const docs: DocWithContent[] = [];
+
+  const partDirs = fs.readdirSync(DOCS_PATH).filter((dir) => {
+    const fullPath = path.join(DOCS_PATH, dir);
+    return fs.statSync(fullPath).isDirectory() && /^\d+-/.test(dir);
+  });
+
+  for (const partDir of partDirs) {
+    const partPath = path.join(DOCS_PATH, partDir);
+    const files = fs.readdirSync(partPath).filter((f) => f.endsWith('.md'));
+
+    for (const file of files) {
+      const filePath = path.join(partPath, file);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const meta = extractMeta(partDir, file);
+      const title = extractTitle(content);
+      const searchContent = extractSearchContent(content);
+
+      docs.push({ ...meta, title, content, searchContent });
     }
   }
 
