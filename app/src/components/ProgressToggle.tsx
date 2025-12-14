@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/contexts/ProgressContext';
 import Link from 'next/link';
 
 interface ProgressToggleProps {
@@ -9,7 +9,7 @@ interface ProgressToggleProps {
 }
 
 export function ProgressToggle({ slug }: ProgressToggleProps) {
-  const { isCompleted, toggleProgress, isAuthenticated, isLoading } = useProgress();
+  const { isCompleted, toggleProgress, isAuthenticated, isLoading, isSessionLoading } = useProgress();
   const [isUpdating, setIsUpdating] = useState(false);
   const completed = isCompleted(slug);
 
@@ -19,7 +19,8 @@ export function ProgressToggle({ slug }: ProgressToggleProps) {
     setIsUpdating(false);
   };
 
-  if (isLoading) {
+  // セッション読み込み中または進捗読み込み中はスケルトン表示
+  if (isSessionLoading || isLoading) {
     return (
       <div className="flex items-center space-x-2 p-4 bg-gray-50 rounded-lg animate-pulse">
         <div className="w-6 h-6 bg-gray-200 rounded" />
