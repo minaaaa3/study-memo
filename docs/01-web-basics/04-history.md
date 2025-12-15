@@ -2,12 +2,21 @@
 
 ## 例え話：本屋の進化
 
+<Callout type="info">
 Webの歴史は、本屋の進化に例えられます。
+</Callout>
 
-1. **静的サイト** = 本が並んでいるだけの本屋。在庫は変わらない
-2. **動的サイト** = 注文を受けて本を取り寄せる本屋。リクエストに応じて変わる
-3. **SPA** = タブレットで本を閲覧できる本屋。ページめくりが超高速
-4. **SSR/SSG** = タブレット＋実物の本を組み合わせた本屋。いいとこ取り
+```mermaid
+graph LR
+    A[静的サイト<br/>本が並んでいるだけ] --> B[動的サイト<br/>注文を受けて取り寄せ]
+    B --> C[SPA<br/>タブレットで閲覧<br/>超高速]
+    C --> D[SSR/SSG<br/>タブレット＋実物の本<br/>いいとこ取り]
+
+    style A fill:#f0f0f0
+    style B fill:#e3f2fd
+    style C fill:#fff9c4
+    style D fill:#c8e6c9
+```
 
 ---
 
@@ -15,19 +24,23 @@ Webの歴史は、本屋の進化に例えられます。
 
 ### 仕組み
 
-```
-ユーザー: 「index.htmlください」
-    ↓
-サーバー: 「はい、どうぞ」（ファイルをそのまま返す）
-    ↓
-ユーザー: 表示
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Server as サーバー
+
+    User->>Server: index.htmlください
+    Server-->>User: はい、どうぞ<br/>（ファイルをそのまま返す）
+    User->>User: 表示
 ```
 
 ### 特徴
 
+<Callout type="info">
 - HTMLファイルがそのまま表示される
 - 全ユーザーに同じ内容
 - サーバーは「ファイルを返すだけ」の簡単な仕事
+</Callout>
 
 ### コード例
 
@@ -49,9 +62,11 @@ Webの歴史は、本屋の進化に例えられます。
 
 ### 限界
 
+<Callout type="warning">
 - 内容を変えたければHTMLファイルを手動で編集
 - ユーザーごとに違う内容を見せられない
 - 「ログイン」という概念がない
+</Callout>
 
 ---
 
@@ -59,21 +74,27 @@ Webの歴史は、本屋の進化に例えられます。
 
 ### 仕組み
 
-```
-ユーザー: 「田中さんのプロフィールください」
-    ↓
-サーバー: DBから田中さんの情報を取得
-         HTMLを動的に生成
-    ↓
-ユーザー: 田中さん専用のページを表示
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Server as サーバー
+    participant DB as データベース
+
+    User->>Server: 田中さんのプロフィールください
+    Server->>DB: 田中さんの情報を取得
+    DB-->>Server: 田中さんのデータ
+    Server->>Server: HTMLを動的に生成
+    Server-->>User: 田中さん専用のページ
 ```
 
 ### 特徴
 
+<Callout type="success">
 - サーバーがHTMLを「作る」
 - データベースと連携
 - ユーザーごとに違う内容
 - PHP、Ruby、Pythonなどの「サーバーサイド言語」
+</Callout>
 
 ### コード例（PHP）
 
@@ -103,9 +124,11 @@ $user = getUser($userId);
 
 ### 限界
 
+<Callout type="warning">
 - ページ遷移のたびに**全体**を読み込み直す
 - 「いいね」を押すだけでページ全体がリロード
 - 「アプリっぽい」操作感が出せない
+</Callout>
 
 ---
 
@@ -113,23 +136,33 @@ $user = getUser($userId);
 
 ### 仕組み
 
-```
-初回:
-ユーザー: 「アプリください」
-サーバー: 「はい、JavaScript一式です」（HTMLはほぼ空）
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Server as サーバー
+    participant JS as JavaScript
 
-2回目以降:
-ユーザー: 「田中さんのデータください」
-サーバー: 「はい、JSONです」（データだけ）
-JavaScript: 受け取ったデータで画面を更新
+    Note over User,JS: 初回
+    User->>Server: アプリください
+    Server-->>User: JavaScript一式<br/>（HTMLはほぼ空）
+
+    Note over User,JS: 2回目以降
+    User->>Server: 田中さんのデータください
+    Server-->>JS: JSON（データだけ）
+    JS->>JS: 画面を更新
 ```
 
 ### 特徴
 
+<Callout type="success">
 - ページ遷移なしで画面が変わる
 - ネイティブアプリのような操作感
 - React、Vue、Angularなどのフレームワーク
+</Callout>
+
+<Callout type="warning">
 - フロントエンドが複雑化
+</Callout>
 
 ### コード例（React）
 
@@ -179,9 +212,11 @@ function App() {
 
 ### 限界
 
+<Callout type="error">
 - 初回読み込みが遅い（JavaScript全部読む）
 - SEO（検索エンジン対策）が難しい
 - JavaScriptが動かないと何も見えない
+</Callout>
 
 ---
 
@@ -189,32 +224,41 @@ function App() {
 
 ### SSR（Server Side Rendering）
 
-```
-ユーザー: 「ページください」
-    ↓
-サーバー: JavaScriptを実行してHTMLを生成
-         完成したHTMLを返す
-    ↓
-ユーザー: HTMLを表示（すぐ見える）
-         その後JavaScriptが動いてインタラクティブに
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Server as サーバー
+
+    User->>Server: ページください
+    Server->>Server: JavaScriptを実行してHTMLを生成
+    Server-->>User: 完成したHTMLを返す
+    User->>User: HTMLを表示（すぐ見える）
+    Note over User: その後JavaScriptが動いて<br/>インタラクティブに
 ```
 
 ### SSG（Static Site Generation）
 
-```
-ビルド時:
-ツール: 全ページのHTMLを事前に生成しておく
+```mermaid
+sequenceDiagram
+    participant Tool as ビルドツール
+    participant Server as サーバー
+    participant User as ユーザー
 
-リクエスト時:
-ユーザー: 「ページください」
-サーバー: 「事前に作っておいたHTMLです」（超高速）
+    Note over Tool: ビルド時
+    Tool->>Tool: 全ページのHTMLを<br/>事前に生成
+
+    Note over Server,User: リクエスト時
+    User->>Server: ページください
+    Server-->>User: 事前に作っておいたHTML<br/>（超高速）
 ```
 
 ### 特徴
 
+<Callout type="success">
 - SPAのいいところ + 初回表示の速さ
 - SEOに強い
 - Next.js、Nuxt.js、Remixなどのフレームワーク
+</Callout>
 
 ### コード例（Next.js）
 
@@ -262,19 +306,31 @@ export default function UserPage({ user }) {
 
 ### 何を選ぶべきか？
 
+```mermaid
+graph TD
+    Start[何を作る？]
+    Start --> Q1{内容は変わる？}
+    Q1 -->|ほぼ変わらない| Q2{SEO重要？}
+    Q1 -->|頻繁に変わる| Q3{SEO重要？}
+
+    Q2 -->|重要| SSG[SSG<br/>ブログ、ドキュメント]
+    Q2 -->|不要| Static[静的サイト]
+
+    Q3 -->|重要| SSR[SSR<br/>ECサイト、ニュース]
+    Q3 -->|不要| SPA[SPA<br/>管理画面、ツール]
+
+    style SSG fill:#c8e6c9
+    style SSR fill:#e3f2fd
+    style SPA fill:#fff9c4
+    style Static fill:#f0f0f0
 ```
-「内容がほぼ変わらない」「SEO重要」
-  → SSG（ブログ、ドキュメントサイト）
 
-「リアルタイムでデータが変わる」「SEO重要」
-  → SSR（ECサイト、ニュースサイト）
-
-「ログイン後のダッシュボード」「SEO不要」
-  → SPA（管理画面、ツール系）
-
-「複雑なことはしない」「情報を載せるだけ」
-  → 静的サイト or SSG
-```
+<WhyButton title="どう選べばいい？">
+- **内容がほぼ変わらない + SEO重要** → SSG（ブログ、ドキュメントサイト）
+- **リアルタイムでデータが変わる + SEO重要** → SSR（ECサイト、ニュースサイト）
+- **ログイン後のダッシュボード + SEO不要** → SPA（管理画面、ツール系）
+- **複雑なことはしない + 情報を載せるだけ** → 静的サイト or SSG
+</WhyButton>
 
 ---
 
@@ -284,24 +340,54 @@ export default function UserPage({ user }) {
 
 現代のフレームワーク（Next.js、Nuxtなど）は、ページごとに方式を選べます：
 
+```mermaid
+graph TD
+    App[Next.jsアプリ]
+    App --> Root["/ トップページ<br>SSG"]
+    App --> Blog["/blog/id ブログ記事<br>SSG"]
+    App --> Products["/products 商品一覧<br>SSR"]
+    App --> Dashboard["/dashboard ダッシュボード<br>SPA"]
+
+    style Root fill:#c8e6c9
+    style Blog fill:#c8e6c9
+    style Products fill:#e3f2fd
+    style Dashboard fill:#fff9c4
 ```
-/           → SSG（トップページ、変わらないから）
-/blog/[id]  → SSG（ブログ記事、事前に生成）
-/products   → SSR（商品一覧、在庫がリアルタイムで変わる）
-/dashboard  → SPA（ログイン後、SEO不要）
-```
+
+<Callout type="tip">
+ページごとに最適な方式を選べるのが現代のフレームワークの強みです。
+</Callout>
 
 ### エッジコンピューティング
 
 サーバーを「世界中の拠点」に分散させて、ユーザーに近い場所で処理する。
 
-```
-従来: 東京にサーバー → 世界中からアクセス
-    アメリカからのアクセスは遅い
+```mermaid
+graph TD
+    subgraph "従来: 東京にサーバー"
+    Tokyo1[東京サーバー]
+    JP1[日本ユーザー] -->|速い| Tokyo1
+    US1[アメリカユーザー] -.->|遅い| Tokyo1
+    end
 
-エッジ: 世界中にサーバー → 近い場所から返す
-    アメリカのユーザーにはアメリカから返す
+    subgraph "エッジ: 世界中にサーバー"
+    TokyoEdge[東京サーバー]
+    USEdge[アメリカサーバー]
+    JP2[日本ユーザー] -->|速い| TokyoEdge
+    US2[アメリカユーザー] -->|速い| USEdge
+    end
+
+    style Tokyo1 fill:#ffcdd2
+    style US1 fill:#ffcdd2
+    style TokyoEdge fill:#c8e6c9
+    style USEdge fill:#c8e6c9
+    style JP2 fill:#c8e6c9
+    style US2 fill:#c8e6c9
 ```
+
+<Callout type="success">
+エッジコンピューティングにより、世界中のユーザーに高速なレスポンスを提供できます。
+</Callout>
 
 ---
 

@@ -16,13 +16,27 @@ Pull型通信は「問い合わせ窓口」のようなものです。
 
 ## 核心：Pull型の種類
 
-```
-Pull型通信
-├── REST API      ← 最も一般的
-├── GraphQL       ← 柔軟なデータ取得
-└── RPC           ← 関数を呼ぶ感覚
-    ├── JSON-RPC
-    └── gRPC
+```mermaid
+graph TB
+    Pull["Pull型通信"]
+    REST["REST API<br/>(最も一般的)"]
+    GraphQL["GraphQL<br/>(柔軟なデータ取得)"]
+    RPC["RPC<br/>(関数を呼ぶ感覚)"]
+    JSONRPC["JSON-RPC"]
+    gRPC["gRPC"]
+
+    Pull --> REST
+    Pull --> GraphQL
+    Pull --> RPC
+    RPC --> JSONRPC
+    RPC --> gRPC
+
+    style Pull fill:#e1f5ff
+    style REST fill:#c8e6c9
+    style GraphQL fill:#c8e6c9
+    style RPC fill:#c8e6c9
+    style JSONRPC fill:#fff4e6
+    style gRPC fill:#fff4e6
 ```
 
 ---
@@ -48,19 +62,31 @@ URLが「何を」、HTTPメソッドが「どうする」を表します。
 
 ### 設計のルール（RESTful）
 
+<Callout type="success">
+**良い例：RESTfulなAPI設計**
+
 ```
-良い例:
 GET    /users          ユーザー一覧を取得
 GET    /users/123      ID:123のユーザーを取得
 POST   /users          ユーザーを作成
 PUT    /users/123      ID:123のユーザーを更新
 DELETE /users/123      ID:123のユーザーを削除
+```
 
-悪い例:
+URLは「名詞」（リソース）、HTTPメソッドは「動詞」（操作）を表現します。
+</Callout>
+
+<Callout type="error">
+**悪い例：RESTfulでない設計**
+
+```
 GET    /getUsers         ← 動詞をURLに入れない
 POST   /createUser       ← メソッドで表現する
 GET    /users/delete/123 ← DELETEメソッドを使う
 ```
+
+URLに動詞を含めるのはRESTfulではありません。
+</Callout>
 
 ### コードで確認
 
@@ -118,21 +144,31 @@ const newPost = await fetch('/api/posts', {
 
 ### RESTの問題点
 
-```
-問題1: オーバーフェッチ
+<Callout type="warning">
+**問題1: オーバーフェッチ**
+
 「ユーザー名だけ欲しい」のに、全フィールドが返ってくる
 
+```
 GET /users/1
 → { id: 1, name: "田中", email: "...", phone: "...", address: "...", ... }
-  （名前だけでいいのに全部来る）
+```
 
-問題2: アンダーフェッチ
+名前だけでいいのに全部来る - 無駄な通信が発生
+</Callout>
+
+<Callout type="warning">
+**問題2: アンダーフェッチ**
+
 「投稿と、その著者の名前」を取るのに2回リクエストが必要
 
+```
 GET /posts/1       → { id: 1, title: "...", authorId: 5 }
 GET /users/5       → { id: 5, name: "田中" }
-（1回で取りたい）
 ```
+
+1回で取りたいのに複数回の通信が必要
+</Callout>
 
 ---
 
@@ -169,16 +205,26 @@ query {
 
 ### RESTとの比較
 
-```
-REST:
-GET /users/1              → ユーザー情報（全フィールド）
-GET /users/1/posts        → そのユーザーの投稿一覧
-計2リクエスト、不要なデータも含む
+```mermaid
+sequenceDiagram
+    participant Client as クライアント
+    participant REST as RESTサーバー
+    participant GraphQL as GraphQLサーバー
 
-GraphQL:
-POST /graphql
-→ 1リクエストで必要なデータだけ取得
+    Note over Client,REST: RESTの場合（2回のリクエスト）
+    Client->>REST: GET /users/1
+    REST->>Client: 全フィールド返却
+    Client->>REST: GET /users/1/posts
+    REST->>Client: 投稿一覧返却
+
+    Note over Client,GraphQL: GraphQLの場合（1回のリクエスト）
+    Client->>GraphQL: query { user(id: 1) { name, posts { title } } }
+    GraphQL->>Client: 必要なデータのみ返却
 ```
+
+<Callout type="info">
+GraphQLは1リクエストで必要なデータだけを柔軟に取得できます。
+</Callout>
 
 ### コードで確認
 
@@ -253,10 +299,28 @@ const response = await fetch('/graphql', {
 
 ### GraphQLの問題点
 
-- 学習コストが高い
-- キャッシュが難しい（URLベースのキャッシュが使えない）
-- シンプルなAPIには過剰
-- N+1問題に注意が必要
+<AccordionSingle title="GraphQLの注意点を詳しく見る">
+
+**学習コストが高い**
+- スキーマ定義言語を学ぶ必要がある
+- リゾルバの概念を理解する必要がある
+- RESTより複雑な設定が必要
+
+**キャッシュが難しい**
+- URLベースのキャッシュ（CDN、ブラウザキャッシュ）が使えない
+- すべて同じエンドポイント（/graphql）に対するPOSTリクエスト
+- クライアント側で専用のキャッシュライブラリが必要
+
+**シンプルなAPIには過剰**
+- 単純なCRUD操作だけならRESTで十分
+- 小規模プロジェクトでは複雑さが増すだけ
+
+**N+1問題に注意が必要**
+- ユーザー一覧と各ユーザーの投稿を取得する場合
+- ユーザーごとにDB問い合わせが発生（N+1回のクエリ）
+- DataLoaderなどで対策が必要
+
+</AccordionSingle>
 
 ---
 
@@ -353,15 +417,25 @@ message User {
 
 ### 選び方
 
-```
-「シンプルなCRUDが多い」「外部公開API」
-  → REST
+```mermaid
+flowchart TD
+    Start["API方式を選ぶ"]
+    Q1{"シンプルなCRUD?<br/>外部公開API?"}
+    Q2{"複雑なデータ関係?<br/>柔軟な取得が必要?"}
+    Q3{"マイクロサービス間?<br/>パフォーマンス重視?"}
 
-「複雑なデータ関係がある」「フロントが柔軟にデータを取りたい」
-  → GraphQL
+    Start --> Q1
+    Q1 -->|Yes| REST[REST API]
+    Q1 -->|No| Q2
+    Q2 -->|Yes| GraphQL[GraphQL]
+    Q2 -->|No| Q3
+    Q3 -->|Yes| gRPC[gRPC]
+    Q3 -->|No| REST2["REST API<br/>#40;デフォルト#41;"]
 
-「マイクロサービス間」「パフォーマンス重視」
-  → gRPC
+    style REST fill:#c8e6c9
+    style GraphQL fill:#c8e6c9
+    style gRPC fill:#c8e6c9
+    style REST2 fill:#c8e6c9
 ```
 
 ---

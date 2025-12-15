@@ -2,7 +2,18 @@
 
 ## 例え話：郵便システムとして考える
 
+<Callout type="info">
 Webは「世界規模の郵便システム」だと考えてみてください。
+</Callout>
+
+```mermaid
+graph LR
+    A[ブラウザ<br/>郵便局の窓口] -->|URL<br/>住所| B[サーバー<br/>届け先の家]
+    B -->|HTTP<br/>郵便のルール| A
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+```
 
 - **URL** = 住所（どこに届けるか）
 - **ブラウザ** = 郵便局の窓口（送りたいものを預ける場所）
@@ -25,13 +36,25 @@ Webは「世界規模の郵便システム」だと考えてみてください�
 Webは「インターネット上で動く仕組みの一つ」です。
 インターネットという道路の上を走るサービスの一種にすぎません。
 
-```
-インターネット上のサービス
-├── Web（HTTP/HTTPS）← これを学ぶ
-├── メール（SMTP、POP、IMAP）
-├── ファイル転送（FTP）
-├── リモート接続（SSH）
-└── その他いろいろ
+<WhyButton title="なぜインターネットとWebは違うの？">
+インターネットは通信の基盤（道路網）で、Webはその上で動くサービス（車）の一つです。メールやファイル転送など、他のサービスも同じインターネット上で動いています。
+</WhyButton>
+
+```mermaid
+graph TD
+    Internet[インターネット<br/>道路網]
+    Internet --> Web[Web HTTP/HTTPS<br/>これを学ぶ]
+    Internet --> Email[メール<br/>SMTP, POP, IMAP]
+    Internet --> FTP[ファイル転送<br/>FTP]
+    Internet --> SSH[リモート接続<br/>SSH]
+    Internet --> Other[その他いろいろ]
+
+    style Internet fill:#e1f5ff
+    style Web fill:#fff9c4
+    style Email fill:#f0f0f0
+    style FTP fill:#f0f0f0
+    style SSH fill:#f0f0f0
+    style Other fill:#f0f0f0
 ```
 
 ---
@@ -40,16 +63,34 @@ Webは「インターネット上で動く仕組みの一つ」です。
 
 URLを分解してみましょう：
 
+```mermaid
+graph LR
+    URL["https://api.example.com:8080/users/123?sort=name#profile"]
+    URL --> Protocol[スキーム/プロトコル<br/>https://]
+    URL --> Host[ホスト名/ドメイン<br/>api.example.com]
+    URL --> Port[ポート番号<br/>:8080]
+    URL --> Path[パス<br/>/users/123]
+    URL --> Query[クエリパラメータ<br/>?sort=name]
+    URL --> Fragment[フラグメント<br/>#profile]
+
+    style URL fill:#fff9c4
+    style Protocol fill:#e3f2fd
+    style Host fill:#e8f5e9
+    style Port fill:#fce4ec
+    style Path fill:#f3e5f5
+    style Query fill:#fff3e0
+    style Fragment fill:#e0f2f1
 ```
-https://api.example.com:8080/users/123?sort=name#profile
-│       │              │    │          │         │
-│       │              │    │          │         └─ フラグメント（ページ内の位置）
-│       │              │    │          └─ クエリパラメータ（検索条件など）
-│       │              │    └─ パス（何を取得するか）
-│       │              └─ ポート番号（どの窓口か）
-│       └─ ホスト名/ドメイン（どのサーバーか）
-└─ スキーム/プロトコル（どんなルールで通信するか）
-```
+
+<Callout type="tip">
+各パートには役割があります：
+- **スキーム**: どんなルールで通信するか（https）
+- **ホスト名**: どのサーバーか（api.example.com）
+- **ポート**: どの窓口か（8080）
+- **パス**: 何を取得するか（/users/123）
+- **クエリ**: 検索条件など（?sort=name）
+- **フラグメント**: ページ内の位置（#profile）
+</Callout>
 
 ### コードで確認
 
@@ -72,17 +113,23 @@ console.log('フラグメント:', url.hash);   // "#profile"
 
 `example.com` と入力しただけでサーバーに届くのはなぜでしょうか？
 
+<Callout type="warning">
 実は、コンピュータは `example.com` という名前を理解できません。
 コンピュータが理解できるのは **IPアドレス**（例：`93.184.216.34`）だけです。
+</Callout>
 
 **DNS（Domain Name System）** は「名前→IPアドレス」の変換を行う電話帳のような仕組みです。
 
-```
-あなた: 「example.comに接続したい」
-    ↓
-DNS: 「example.comは93.184.216.34だよ」
-    ↓
-あなた: 「93.184.216.34に接続します」
+```mermaid
+sequenceDiagram
+    participant User as あなた
+    participant DNS as DNSサーバー
+    participant Server as Webサーバー
+
+    User->>DNS: example.comのIPアドレスは？
+    DNS-->>User: 93.184.216.34です
+    User->>Server: 93.184.216.34に接続
+    Server-->>User: 接続完了
 ```
 
 ### コードで確認（Node.js）
@@ -118,10 +165,20 @@ dns.lookup('example.com', (err, address) => {
 HTTPSは「HTTPに暗号化を追加したもの」です。
 やり取りの内容は同じで、途中を暗号化しているかどうかの違いです。
 
+```mermaid
+graph LR
+    A[あなた] -->|HTTP<br/>丸見え| B[サーバー]
+    C[あなた] -->|HTTPS<br/>暗号化| D[サーバー]
+
+    style A fill:#ffcdd2
+    style B fill:#ffcdd2
+    style C fill:#c8e6c9
+    style D fill:#c8e6c9
 ```
-HTTP:   あなた ──[丸見え]── サーバー
-HTTPS:  あなた ══[暗号化]══ サーバー
-```
+
+<Callout type="error">
+HTTPは通信内容が丸見えです。パスワードやクレジットカード情報を送る際は必ずHTTPSを使いましょう。
+</Callout>
 
 ---
 

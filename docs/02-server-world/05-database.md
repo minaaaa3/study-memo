@@ -33,24 +33,28 @@
 
 </WhyButton>
 
-### 変数に保存する場合
+### データ保存方法の比較
+
+<Callout type="error">
+**変数に保存：本番では使えない**
 
 ```javascript
-// サーバーのメモリに保存
-let users = [];
+let users = []; // サーバーのメモリに保存
 
 app.post('/users', (req, res) => {
   users.push(req.body);
   res.json({ success: true });
 });
-
-// 問題点：
-// - サーバー再起動で全部消える
-// - サーバーが複数台あると同期できない
-// - メモリに収まる量しか保存できない
 ```
 
-### ファイルに保存する場合
+問題点：
+- サーバー再起動で全部消える
+- サーバーが複数台あると同期できない
+- メモリに収まる量しか保存できない
+</Callout>
+
+<Callout type="warning">
+**ファイルに保存：小規模なら可能だが限界がある**
 
 ```javascript
 const fs = require('fs');
@@ -61,19 +65,22 @@ app.post('/users', (req, res) => {
   fs.writeFileSync('users.json', JSON.stringify(users));
   res.json({ success: true });
 });
-
-// 問題点：
-// - 同時アクセスで壊れる可能性
-// - 検索が遅い（全データ読んでfilterする）
-// - データが増えると扱いにくい
 ```
 
-### データベースなら
+問題点：
+- 同時アクセスで壊れる可能性
+- 検索が遅い（全データ読んでfilterする）
+- データが増えると扱いにくい
+</Callout>
+
+<Callout type="success">
+**データベース：本番環境に適している**
 
 - データが永続化される
 - 複数のリクエストを同時に処理できる
 - 高速に検索できる（インデックス）
 - 複数サーバーから同じデータにアクセス
+</Callout>
 
 ---
 
@@ -83,6 +90,22 @@ app.post('/users', (req, res) => {
 
 データを「テーブル」に格納。行と列で構成。
 
+```mermaid
+erDiagram
+    USERS ||--o{ POSTS : "has many"
+    USERS {
+        int id PK
+        string name
+        string email
+    }
+    POSTS {
+        int id PK
+        string title
+        int user_id FK
+    }
+```
+
+テーブル例：
 ```
 users テーブル
 +----+--------+------------------+
@@ -136,18 +159,29 @@ posts テーブル
 
 ### 選び方
 
-```
-「複雑なデータ関係がある」「整合性が重要」
-  → SQL（PostgreSQL、MySQL）
+```mermaid
+flowchart TD
+    Start["データベースを選ぶ"]
+    Q1{"複雑なデータ関係?<br/>整合性が重要?"}
+    Q2{"スキーマが頻繁に変わる?<br/>高速な読み書きが必要?"}
+    Q3{"キャッシュ/セッション/<br/>ランキング?"}
+    Q4{"とりあえず<br/>始めたい?"}
 
-「スキーマが頻繁に変わる」「読み書きが高速であることが重要」
-  → NoSQL（MongoDB）
+    Start --> Q1
+    Q1 -->|Yes| SQL["SQL<br/>(PostgreSQL/MySQL)"]
+    Q1 -->|No| Q2
+    Q2 -->|Yes| NoSQL["NoSQL<br/>(MongoDB)"]
+    Q2 -->|No| Q3
+    Q3 -->|Yes| Redis["Redis<br/>(キーバリュー型)"]
+    Q3 -->|No| Q4
+    Q4 -->|Yes| SQLite["SQLite<br/>(ファイル1つで完結)"]
+    Q4 -->|No| SQL2["SQL<br/>(デフォルト)"]
 
-「キャッシュ」「セッション」「ランキング」
-  → Redis（キーバリュー型）
-
-「とりあえず始めたい」「ファイル1つで完結」
-  → SQLite
+    style SQL fill:#c8e6c9
+    style NoSQL fill:#c8e6c9
+    style Redis fill:#c8e6c9
+    style SQLite fill:#c8e6c9
+    style SQL2 fill:#c8e6c9
 ```
 
 ---
@@ -363,23 +397,32 @@ const users = await prisma.user.findMany({
 
 ### なぜ必要か
 
-```javascript
-// 銀行送金の例
-// AさんからBさんに1000円送金
+<Callout type="error">
+**トランザクションなしの危険性**
 
-// トランザクションなしだと...
+銀行送金の例：AさんからBさんに1000円送金
+
+```javascript
 db.run('UPDATE accounts SET balance = balance - 1000 WHERE user = "A"');
 // ← ここでサーバーがクラッシュしたら？
 db.run('UPDATE accounts SET balance = balance + 1000 WHERE user = "B"');
-// Aからは引かれたけど、Bには入ってない状態に！
+```
 
-// トランザクションありなら
+Aからは引かれたけど、Bには入ってない状態に！1000円が消失！
+</Callout>
+
+<Callout type="success">
+**トランザクションで安全に**
+
+```javascript
 db.transaction(() => {
   db.run('UPDATE accounts SET balance = balance - 1000 WHERE user = "A"');
   db.run('UPDATE accounts SET balance = balance + 1000 WHERE user = "B"');
 })();
-// 両方成功するか、両方失敗するか（中途半端な状態にならない）
 ```
+
+両方成功するか、両方失敗するか（中途半端な状態にならない）
+</Callout>
 
 ### Prismaでのトランザクション
 
@@ -421,21 +464,28 @@ await prisma.$transaction([
 
 ### なぜ必要か
 
-```
-開発中にスキーマを変更したい：
-「usersテーブルにageカラムを追加」
+<Callout type="warning">
+**手動でスキーマを変更する問題点**
 
-手動でやると：
+開発中にスキーマを変更したい：「usersテーブルにageカラムを追加」
+
 - 開発環境で ALTER TABLE を実行
 - 本番環境でも同じことを忘れずに実行
 - チームメンバーにも伝える
-→ ミスが起きやすい
 
-マイグレーションを使うと：
+ミスが起きやすく、環境ごとにDBの状態が異なってしまう！
+</Callout>
+
+<Callout type="success">
+**マイグレーションで安全に管理**
+
 - 変更を「マイグレーションファイル」として記録
 - コマンド1つで適用
 - バージョン管理できる
-```
+- 変更履歴が残る
+
+チーム全員が同じDB状態を維持できます。
+</Callout>
 
 ### Prismaのマイグレーション
 
@@ -461,11 +511,15 @@ npx prisma migrate deploy
 
 ### 「ORMは遅い」？
 
+<Callout type="info">
 適切に使えば問題ありません。
 
+パフォーマンス最適化のポイント：
 - N+1問題を避ける（eager loading）
-- 必要なカラムだけ取得
+- 必要なカラムだけ取得（select文で指定）
 - 大量データは生のSQLも検討
+- インデックスを適切に張る
+</Callout>
 
 ### 「SQLite は本番で使えない」？
 

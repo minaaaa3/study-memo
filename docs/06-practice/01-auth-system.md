@@ -4,9 +4,41 @@
 
 「自前で実装」と「ライブラリ使用」の両方を体験し、ライブラリが何を解決しているか理解する。
 
+<Callout type="info">
+認証システムは、セキュリティに直結する重要な機能です。本番環境では実績のあるライブラリの使用を強く推奨しますが、仕組みを理解することで適切な実装判断ができるようになります。
+</Callout>
+
 ---
 
 ## 自前実装：セッションベース認証
+
+### 認証フローの全体像
+
+```mermaid
+sequenceDiagram
+    participant Client as クライアント
+    participant Server as サーバー
+    participant DB as データベース
+
+    Note over Client,DB: 登録フロー
+    Client->>Server: POST /auth/register
+    Server->>DB: パスワードをハッシュ化して保存
+    DB-->>Server: ユーザー作成完了
+    Server-->>Client: 登録成功
+
+    Note over Client,DB: ログインフロー
+    Client->>Server: POST /auth/login
+    Server->>DB: メールでユーザー検索
+    DB-->>Server: ユーザー情報取得
+    Server->>Server: パスワード照合
+    Server->>Server: セッションID生成
+    Server-->>Client: Cookie設定 (sessionId)
+
+    Note over Client,DB: 認証が必要なリクエスト
+    Client->>Server: GET /me (sessionId付き)
+    Server->>Server: セッション検証
+    Server-->>Client: ユーザー情報返却
+```
 
 ### ディレクトリ構成
 
@@ -24,6 +56,16 @@ auth-demo/
 ```
 
 ### 実装
+
+<StepByStep>
+
+<Step title="データベース層の実装">
+
+インメモリDBでユーザー管理とセッション管理を実装します。
+
+<Callout type="warning">
+この実装は学習用です。本番環境では必ずPostgreSQLやMongoDBなどの永続化DBを使用してください。
+</Callout>
 
 ```javascript
 // src/db.js
@@ -65,6 +107,21 @@ module.exports = {
 };
 ```
 
+<WhyButton>
+**なぜbcryptを使うのか？**
+
+パスワードを平文で保存すると、データベースが漏洩した際に全ユーザーのパスワードが露出します。bcryptは：
+- ハッシュ化により元のパスワードを復元不可能にする
+- ソルトを自動生成し、レインボーテーブル攻撃を防ぐ
+- コスト係数により計算コストを調整できる（ブルートフォース攻撃を遅延）
+</WhyButton>
+
+</Step>
+
+<Step title="認証ミドルウェアの実装">
+
+リクエストからセッションIDを取得し、ユーザー認証を行います。
+
 ```javascript
 // src/middleware/auth.js
 const db = require('../db');
@@ -85,6 +142,16 @@ module.exports = function authenticate(req, res, next) {
   next();
 };
 ```
+
+<Callout type="tip">
+ミドルウェアパターンを使うことで、認証が必要なルートに簡単に保護をかけられます。`app.get('/protected', authenticate, handler)` のように使用します。
+</Callout>
+
+</Step>
+
+<Step title="認証ルートの実装">
+
+登録、ログイン、ログアウトのエンドポイントを実装します。
 
 ```javascript
 // src/routes/auth.js
@@ -156,6 +223,20 @@ router.post('/logout', (req, res) => {
 module.exports = router;
 ```
 
+<Callout type="danger">
+**セキュリティのベストプラクティス**
+- Cookie設定で `httpOnly: true` を必ず指定（XSS攻撃対策）
+- `secure: true` で HTTPS 通信のみに制限（本番環境）
+- `sameSite: 'strict'` で CSRF 攻撃を防ぐ
+- ログイン失敗時は「メールまたはパスワードが違います」と表示（アカウント列挙攻撃対策）
+</Callout>
+
+</Step>
+
+<Step title="サーバーのエントリーポイント">
+
+Express サーバーを起動し、ルートとミドルウェアを設定します。
+
 ```javascript
 // src/index.js
 require('dotenv').config();
@@ -182,27 +263,98 @@ app.listen(3000, () => {
 });
 ```
 
+</Step>
+
+</StepByStep>
+
 ### 自前実装で考慮すべきこと
 
-```
-実装したこと:
-✓ パスワードのハッシュ化
-✓ セッション管理
-✓ Cookie設定（httpOnly, secure, sameSite）
+<Accordion title="実装済みの機能">
 
-まだ足りないこと:
-□ セッションの有効期限切れ処理
-□ CSRFトークン
-□ レート制限（ブルートフォース対策）
-□ パスワードリセット
-□ メール確認
-□ OAuth（Google, GitHubログイン）
-□ 2要素認証
 ```
+✓ パスワードのハッシュ化（bcrypt）
+✓ セッション管理（Map）
+✓ Cookie設定（httpOnly, secure, sameSite）
+✓ 基本的なバリデーション
+```
+
+</Accordion>
+
+<Accordion title="本番環境で追加が必要な機能">
+
+<Callout type="warning">
+以下の機能がないと、本番環境では脆弱性やユーザビリティの問題が発生します。
+</Callout>
+
+```
+□ セッションの有効期限切れ処理
+  - セッションタイムアウト
+  - リフレッシュトークン
+
+□ CSRFトークン
+  - クロスサイトリクエストフォージェリ対策
+
+□ レート制限（ブルートフォース対策）
+  - IPベースの制限
+  - アカウントロック機能
+
+□ パスワードリセット
+  - メール送信
+  - 一時トークン管理
+
+□ メール確認
+  - 確認メール送信
+  - トークン検証
+
+□ OAuth（Google, GitHubログイン）
+  - OAuth 2.0 フロー実装
+
+□ 2要素認証（2FA）
+  - TOTP（Google Authenticator）
+  - SMSコード
+```
+
+<WhyButton>
+**なぜこれほど多くの機能が必要なのか？**
+
+認証システムは攻撃者の主要なターゲットです。一つの脆弱性でもシステム全体が危険に晒されます。そのため、業界のベストプラクティスに従った多層防御が必須です。これらの機能を全て自前で実装・メンテナンスするのは非常に困難なため、NextAuth.jsなどのライブラリの使用が推奨されます。
+</WhyButton>
+
+</Accordion>
 
 ---
 
 ## NextAuth.js を使う場合
+
+<Callout type="success">
+NextAuth.jsを使うと、上記の複雑な実装の大部分が自動化されます。特にOAuth認証は設定だけで利用可能になります。
+</Callout>
+
+### NextAuth.js の構造
+
+```mermaid
+graph TB
+    subgraph "NextAuth.js"
+        A[API Route<br/>/api/auth/...nextauth] --> B[Providers]
+        A --> C[Session Strategy]
+        A --> D[Callbacks]
+
+        B --> E[Credentials<br/>メール/パスワード]
+        B --> F[Google Provider]
+        B --> G[GitHub Provider]
+
+        C --> H[JWT Strategy]
+        C --> I[Database Strategy]
+    end
+
+    J[Client Component] --> K[useSession Hook]
+    K --> A
+
+    L[Server Component] --> M[getServerSession]
+    M --> A
+```
+
+### 実装コード
 
 ```javascript
 // app/api/auth/[...nextauth]/route.js
@@ -284,33 +436,136 @@ export function LoginButton() {
 
 ## 比較
 
+<Tabs>
+<Tab title="機能比較">
+
 | 観点 | 自前実装 | NextAuth.js |
 |------|---------|-------------|
 | 学習 | 仕組みを深く理解 | ブラックボックス |
-| 開発速度 | 遅い | 速い |
+| 開発速度 | 遅い（数日〜週） | 速い（数時間） |
 | セキュリティ | 自己責任 | ベストプラクティス |
-| カスタマイズ | 自由 | 制約あり |
+| カスタマイズ | 完全に自由 | 制約あり |
 | OAuth | 自前で実装 | 設定だけ |
 | メンテナンス | 自分で対応 | ライブラリ更新で対応 |
+| 2FA | 自前で実装 | サポートあり |
+| セッション管理 | 手動実装 | 自動管理 |
+
+</Tab>
+
+<Tab title="コード量比較">
+
+**自前実装**
+- データベース層: 約80行
+- ミドルウェア: 約20行
+- 認証ルート: 約100行
+- 追加機能（CSRF、レート制限等）: 約200行
+- **合計: 約400行以上**
+
+**NextAuth.js**
+- 設定ファイル: 約50行
+- クライアントコード: 約10行
+- **合計: 約60行**
+
+<Callout type="info">
+コード量が少ないということは、バグの発生確率も低く、メンテナンスも容易になります。
+</Callout>
+
+</Tab>
+
+<Tab title="セキュリティ比較">
+
+**自前実装で必要な対策**
+- パスワードハッシュ化
+- セッション管理
+- CSRF対策
+- XSS対策
+- SQLインジェクション対策
+- レート制限
+- セッション固定攻撃対策
+- タイミング攻撃対策
+
+**NextAuth.jsで自動対応**
+- 上記すべて + 追加のベストプラクティス
+- 定期的なセキュリティアップデート
+- コミュニティによる監査
+
+</Tab>
+</Tabs>
 
 ### 選び方
 
-```
-「仕組みを理解したい」「独自の要件がある」
-  → 自前実装（学習目的なら特に）
+<Callout type="tip" title="判断基準">
 
-「早く作りたい」「標準的な認証でいい」
-  → NextAuth.js
+**自前実装を選ぶべき場合**
+- 仕組みを深く理解したい（学習目的）
+- 極めて特殊な認証要件がある
+- 既存システムとの統合が必要
 
-「本番プロダクト」
-  → NextAuth.jsなどの実績あるライブラリ推奨
-```
+**NextAuth.js を選ぶべき場合**
+- 早く安全に実装したい（推奨）
+- 標準的な認証で十分
+- OAuth認証が必要
+- 本番プロダクト
+
+**本番環境での推奨**
+NextAuth.jsまたはAuth0、Clerk などの実績あるライブラリ・サービスを強く推奨します。
+
+</Callout>
 
 ---
 
 ## 演習
 
-1. 自前実装を動かしてみる
-2. NextAuth.jsでGoogleログインを実装してみる
-3. 両方のCookieの中身を比較してみる
+<StepByStep>
+
+<Step title="自前実装を動かす">
+
+1. プロジェクトをセットアップ
+```bash
+mkdir auth-demo && cd auth-demo
+npm init -y
+npm install express bcrypt cookie-parser dotenv
+```
+
+2. 上記のコードをファイルに配置
+
+3. サーバーを起動して動作確認
+```bash
+node src/index.js
+```
+
+</Step>
+
+<Step title="NextAuth.jsでGoogleログインを実装">
+
+1. Next.jsプロジェクトを作成
+```bash
+npx create-next-app@latest auth-nextauth
+cd auth-nextauth
+npm install next-auth
+```
+
+2. Google Cloud Consoleでクライアント IDを取得
+
+3. `.env.local` に認証情報を設定
+
+4. 上記のNextAuth.jsコードを実装
+
+</Step>
+
+<Step title="Cookie の中身を比較">
+
+開発者ツール（Application > Cookies）で両方のCookieを確認し、以下を比較：
+- セッションIDの形式
+- セキュリティ設定（httpOnly、secure、sameSite）
+- 有効期限
+- JWTの構造（NextAuth.jsの場合）
+
+<Callout type="info">
+NextAuth.jsのJWTは暗号化されており、中身を確認するには jwt.io などのツールを使用します。
+</Callout>
+
+</Step>
+
+</StepByStep>
 

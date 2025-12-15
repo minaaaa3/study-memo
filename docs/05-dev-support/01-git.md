@@ -30,14 +30,16 @@ project/
 ```
 project/
 └── index.js  ← 常に最新
+```
 
-履歴:
-commit 3: バグ修正
-commit 2: 機能追加
-commit 1: 初期コミット
+```mermaid
+gitGraph
+    commit id: "初期コミット"
+    commit id: "機能追加"
+    commit id: "バグ修正"
+```
 
 いつでも過去に戻れる
-```
 
 ---
 
@@ -55,14 +57,19 @@ git clone https://github.com/user/repo.git
 
 ### ステージング → コミット
 
+```mermaid
+flowchart LR
+    A[作業ディレクトリ] -->|git add| B[ステージング]
+    B -->|git commit| C[リポジトリ]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#e1ffe1
 ```
-作業ディレクトリ → ステージング → リポジトリ
-                add           commit
 
 1. ファイルを編集（作業ディレクトリ）
 2. git add で「コミット対象」に追加（ステージング）
 3. git commit でスナップショットを保存（リポジトリ）
-```
 
 ```bash
 # 変更を確認
@@ -85,14 +92,18 @@ git log --oneline
 
 ### 概念
 
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    commit id: "C"
+    branch feature
+    commit id: "D"
+    commit id: "E"
 ```
-main:     A---B---C
-                  \
-feature:           D---E
 
-main: 本番用の安定したコード
-feature: 新機能を開発中
-```
+- main: 本番用の安定したコード
+- feature: 新機能を開発中
 
 ### 基本操作
 
@@ -116,18 +127,36 @@ git branch -d feature/login
 
 ### ブランチ戦略
 
+```mermaid
+gitGraph
+    commit id: "初期"
+    branch develop
+    checkout develop
+    commit id: "dev1"
+    branch feature/login
+    checkout feature/login
+    commit id: "ログイン実装"
+    checkout develop
+    branch feature/signup
+    checkout feature/signup
+    commit id: "登録実装"
+    checkout develop
+    merge feature/login
+    merge feature/signup
+    checkout main
+    merge develop tag: "v1.0"
+    branch hotfix/urgent-bug
+    commit id: "緊急修正"
+    checkout main
+    merge hotfix/urgent-bug tag: "v1.0.1"
 ```
-main
-├── develop（開発用）
-│   ├── feature/login（機能A）
-│   └── feature/signup（機能B）
-└── hotfix/urgent-bug（緊急修正）
 
-よくあるルール:
+<Callout type="tip">
+よくあるブランチ戦略のルール:
 - mainは常に動作する状態を保つ
 - 新機能はfeatureブランチで開発
 - 完成したらdevelop→mainにマージ
-```
+</Callout>
 
 ---
 
@@ -151,24 +180,54 @@ git fetch origin
 
 ### よくあるワークフロー
 
+<StepByStep>
+
+<Step title="最新を取得">
+
 ```bash
-# 1. 最新を取得
 git pull origin main
+```
 
-# 2. ブランチを作成
+</Step>
+
+<Step title="ブランチを作成">
+
+```bash
 git checkout -b feature/new-feature
+```
 
-# 3. 作業してコミット
+</Step>
+
+<Step title="作業してコミット">
+
+```bash
 git add .
 git commit -m "新機能を実装"
-
-# 4. プッシュ
-git push origin feature/new-feature
-
-# 5. GitHubでPull Requestを作成
-
-# 6. レビュー後、マージ
 ```
+
+</Step>
+
+<Step title="プッシュ">
+
+```bash
+git push origin feature/new-feature
+```
+
+</Step>
+
+<Step title="GitHubでPull Requestを作成">
+
+GitHubのWebページから Pull Request を作成します。
+
+</Step>
+
+<Step title="レビュー後、マージ">
+
+チームメンバーのレビューが完了したらマージします。
+
+</Step>
+
+</StepByStep>
 
 ---
 
@@ -290,6 +349,12 @@ build/
 *.log
 ```
 
+<Callout type="warning">
+**重要：秘密情報はGitにコミットしない**
+
+`.env`ファイルや認証情報を含むファイルは必ず`.gitignore`に追加してください。一度コミットすると履歴に残り、削除しても復元できてしまいます。
+</Callout>
+
 ---
 
 ## よくある誤解
@@ -319,6 +384,12 @@ git push --force origin feature/my-feature
 # mainや共有ブランチでは絶対ダメ
 git push --force origin main  # 他の人の変更を消す可能性
 ```
+
+<Callout type="warning">
+**force push の危険性**
+
+共有ブランチ（main、developなど）に対して`git push --force`を実行すると、他の人の変更が消えてしまう可能性があります。個人ブランチでのみ使用してください。
+</Callout>
 
 ---
 

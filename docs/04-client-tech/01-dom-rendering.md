@@ -36,17 +36,17 @@ document.querySelector('h1').textContent = '新しいタイトル';
 
 ### DOMツリー
 
-```
-document
-└── html
-    ├── head
-    │   └── title
-    └── body
-        └── div#app
-            ├── h1
-            │   └── "タイトル"（テキストノード）
-            └── p
-                └── "本文"（テキストノード）
+```mermaid
+graph TD
+    A[document] --> B[html]
+    B --> C[head]
+    B --> D[body]
+    C --> E[title]
+    D --> F[div#app]
+    F --> G[h1]
+    F --> H[p]
+    G --> I["タイトル (テキストノード)"]
+    H --> J["本文 (テキストノード)"]
 ```
 
 ---
@@ -55,14 +55,26 @@ document
 
 ブラウザがHTMLを受け取ってから画面に表示するまで：
 
+```mermaid
+graph LR
+    A[HTML解析] --> B[DOMツリー構築]
+    C[CSS解析] --> D[CSSOMツリー構築]
+    B --> E[レンダーツリー構築]
+    D --> E
+    E --> F[レイアウト計算]
+    F --> G[ペイント]
+    G --> H[合成]
+    H --> I[画面表示]
 ```
-1. HTML解析 → DOMツリー構築
-2. CSS解析 → CSSOMツリー構築
-3. DOM + CSSOM → レンダーツリー構築
-4. レイアウト（各要素の位置・サイズ計算）
-5. ペイント（実際に描画）
-6. 合成（レイヤーを重ねる）
-```
+
+<StepByStep>
+1. **HTML解析** - HTMLをパースしてDOMツリーを構築
+2. **CSS解析** - CSSをパースしてCSSOMツリーを構築
+3. **レンダーツリー構築** - DOMとCSSOMを組み合わせる
+4. **レイアウト** - 各要素の位置とサイズを計算
+5. **ペイント** - 実際に画面に描画
+6. **合成** - レイヤーを重ねて最終的な画面を作成
+</StepByStep>
 
 ### コードで確認
 
@@ -161,6 +173,10 @@ getComputedStyle(el).backgroundColor;
 
 ## なぜReactを使うのか
 
+<Callout type="info">
+**重要な問い**: なぜ素のDOM操作ではなく、Reactのようなライブラリを使うのか？
+</Callout>
+
 ### 素のDOM操作の問題
 
 ```javascript
@@ -218,14 +234,28 @@ function TodoList({ todos, onToggle }) {
 
 ## 仮想DOM（Virtual DOM）
 
+<WhyButton>
+**なぜ仮想DOMを使うのか？**
+
+DOM操作は非常に重いです。特にブラウザのレンダリングを引き起こす操作は遅いため、必要最小限のDOM操作にすることでパフォーマンスを向上させます。
+</WhyButton>
+
 ### 仕組み
 
+```mermaid
+graph LR
+    A[状態変更] --> B[新しい仮想DOM作成]
+    B --> C[前の仮想DOMと比較]
+    C --> D[差分を検出]
+    D --> E[必要な部分だけDOM更新]
 ```
-1. 状態が変わる
-2. 新しい仮想DOMを作る（JavaScriptオブジェクト）
-3. 前の仮想DOMと比較（差分検出）
-4. 差分だけ実際のDOMに適用
-```
+
+<StepByStep>
+1. **状態が変わる** - useStateなどで状態が更新される
+2. **新しい仮想DOMを作る** - JavaScriptオブジェクトとして軽量に作成
+3. **前の仮想DOMと比較** - 差分検出アルゴリズムを実行
+4. **差分だけ実際のDOMに適用** - 変更された部分のみを更新
+</StepByStep>
 
 ```javascript
 // 仮想DOMのイメージ（実際はもっと複雑）
@@ -255,6 +285,10 @@ JS操作 100回 × 速い + DOM操作 3回 × 遅い = まあまあ速い
 ---
 
 ## パフォーマンスの考慮
+
+<Callout type="warning">
+**パフォーマンスの注意点**: リフローとリペイントは重い処理です。特にリフローは要素の位置・サイズを再計算するため、できるだけ回数を減らしましょう。
+</Callout>
 
 ### リフロー（レイアウト再計算）を避ける
 
@@ -294,9 +328,8 @@ elements.forEach((el, i) => {
 
 ## よくある誤解
 
-### 「innerHTMLは悪」？
-
-場合によります。
+<Accordion title="「innerHTMLは悪」は本当？">
+場合によります。セキュリティに注意すれば問題ありません。
 
 ```javascript
 // XSSに注意（ユーザー入力を直接入れない）
@@ -308,15 +341,16 @@ el.innerHTML = '<span>固定テキスト</span>';  // OK
 // ユーザー入力はtextContentを使う
 el.textContent = userInput;  // 安全（HTMLとして解釈されない）
 ```
+</Accordion>
 
-### 「仮想DOMは常に速い」？
-
+<Accordion title="「仮想DOMは常に速い」は本当？">
 オーバーヘッドがあるので、単純なケースでは素のDOM操作の方が速いこともあります。
 
 仮想DOMが有利なのは：
 - 複雑なUI
 - 頻繁な更新
 - 差分が少ない更新
+</Accordion>
 
 ---
 

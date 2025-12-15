@@ -61,6 +61,10 @@ function UserList() {
 
 ## TanStack Query（React Query）
 
+<Callout type="success">
+**推奨ライブラリ**: TanStack Queryはサーバー状態管理のデファクトスタンダードです。キャッシュ、再取得、エラーハンドリングを自動で行ってくれます。
+</Callout>
+
 サーバー状態管理のためのライブラリ。
 
 ```bash
@@ -135,6 +139,26 @@ function UserList() {
 ```
 
 ### queryKey の役割
+
+```mermaid
+graph LR
+    A[queryKey: users] --> B[キャッシュ]
+    C[ComponentA] --> A
+    D[ComponentB] --> A
+    E[ComponentC] --> A
+
+    F[queryKey: users, 1] --> G[別のキャッシュ]
+    H[UserDetail] --> F
+
+    style B fill:#e1f5e1
+    style G fill:#fff3e0
+```
+
+<WhyButton>
+**なぜqueryKeyが重要なのか？**
+
+queryKeyはキャッシュの識別子です。同じqueryKeyを使うコンポーネントは同じキャッシュを共有し、APIリクエストを節約できます。
+</WhyButton>
 
 ```jsx
 // queryKeyはキャッシュのキー
@@ -267,6 +291,21 @@ useMutation({
 
 ## キャッシュの制御
 
+```mermaid
+graph LR
+    A[データ更新] --> B[invalidateQueries]
+    B --> C[キャッシュを古いとマーク]
+    C --> D[自動で再取得]
+    D --> E[画面更新]
+
+    F[データ更新] --> G[setQueryData]
+    G --> H[キャッシュを直接書き換え]
+    H --> E
+```
+
+<Tabs>
+<TabItem value="invalidate" label="invalidateQueries">
+
 ### invalidateQueries
 
 キャッシュを「古い」とマークして再取得。
@@ -285,6 +324,9 @@ queryClient.invalidateQueries({ queryKey: ['users'] });
 queryClient.invalidateQueries({ queryKey: ['users'], exact: true });
 // → ['users'] のみ無効化
 ```
+
+</TabItem>
+<TabItem value="set" label="setQueryData">
 
 ### setQueryData
 
@@ -308,6 +350,13 @@ queryClient.setQueryData(['users'], old =>
   old.filter(user => user.id !== deletedId)
 );
 ```
+
+</TabItem>
+</Tabs>
+
+<Callout type="tip">
+**使い分け**: 通常は `invalidateQueries` を使い、楽観的更新など即座にUIを更新したい場合は `setQueryData` を使います。
+</Callout>
 
 ---
 

@@ -31,12 +31,15 @@
 
 ### サーバープログラムがやること
 
-```
-1. 起動する
-2. 特定のポートで「待ち受け」を開始する
-3. リクエストが来たら処理する
-4. レスポンスを返す
-5. また待ち受けに戻る（無限ループ）
+```mermaid
+stateDiagram-v2
+    [*] --> 起動
+    起動 --> 待ち受け開始: ポートをバインド
+    待ち受け開始 --> リクエスト待機
+    リクエスト待機 --> リクエスト処理: リクエスト受信
+    リクエスト処理 --> レスポンス返却
+    レスポンス返却 --> リクエスト待機: 次のリクエストへ
+    リクエスト待機 --> [*]: 終了シグナル
 ```
 
 ---
@@ -47,17 +50,27 @@
 
 1台のコンピュータで複数のサービスを動かすための「窓口番号」です。
 
-```
-コンピュータ（IPアドレス: 192.168.1.1）
-├── ポート 80   → Webサーバー（HTTP）
-├── ポート 443  → Webサーバー（HTTPS）
-├── ポート 22   → SSHサーバー
-├── ポート 3000 → 開発用アプリ
-└── ポート 5432 → PostgreSQL
+```mermaid
+graph TB
+    Computer["コンピュータ<br/>(IPアドレス: 192.168.1.1)"]
+    Computer --> Port80["ポート 80<br/>Webサーバー(HTTP)"]
+    Computer --> Port443["ポート 443<br/>Webサーバー(HTTPS)"]
+    Computer --> Port22["ポート 22<br/>SSHサーバー"]
+    Computer --> Port3000["ポート 3000<br/>開発用アプリ"]
+    Computer --> Port5432["ポート 5432<br/>PostgreSQL"]
+
+    style Computer fill:#e1f5ff
+    style Port80 fill:#fff4e6
+    style Port443 fill:#fff4e6
+    style Port22 fill:#fff4e6
+    style Port3000 fill:#fff4e6
+    style Port5432 fill:#fff4e6
 ```
 
+<Callout type="info">
 URLの `https://example.com:8080` の `:8080` がポート番号です。
 省略すると、HTTPは80、HTTPSは443が使われます。
+</Callout>
 
 ### コードで確認
 
@@ -109,30 +122,41 @@ node server.js
 
 ### なぜ重要か
 
-```
-プロセスが死ぬ = サーバーが止まる
+<Callout type="warning">
+**プロセスが死ぬ = サーバーが止まる**
 
-例：
+プロセスが停止する原因：
 - エラーでクラッシュ
 - メモリ不足で強制終了
 - 手動で停止
-```
+</Callout>
 
-本番環境では「プロセスが死んだら自動で再起動」する仕組みを入れます。
+<Callout type="tip">
+本番環境では「プロセスが死んだら自動で再起動」する仕組み（PM2、systemdなど）を導入します。
+</Callout>
 
 ### スレッド = プロセス内の実行単位
 
-```
-プロセスA
-├── スレッド1（リクエスト処理中）
-├── スレッド2（別のリクエスト処理中）
-└── スレッド3（待機中）
+```mermaid
+graph TB
+    ProcessA["プロセスA"]
+    ProcessA --> Thread1["スレッド1<br/>(リクエスト処理中)"]
+    ProcessA --> Thread2["スレッド2<br/>(別のリクエスト処理中)"]
+    ProcessA --> Thread3["スレッド3<br/>(待機中)"]
+
+    style ProcessA fill:#e1f5ff
+    style Thread1 fill:#c8e6c9
+    style Thread2 fill:#c8e6c9
+    style Thread3 fill:#fff9c4
 ```
 
 マルチスレッドなら、1プロセスで複数のリクエストを同時に処理できます。
 
-Node.jsは「シングルスレッド + 非同期I/O」という仕組みで、
-1スレッドでも多くのリクエストを効率的に処理します。
+<WhyButton title="Node.jsはなぜシングルスレッドでも高速？">
+Node.jsは「シングルスレッド + 非同期I/O」という仕組みで、1スレッドでも多くのリクエストを効率的に処理します。
+
+I/O操作（ファイル読み込み、DB問い合わせなど）の待ち時間を他の処理に充てることで、1スレッドでも高いスループットを実現しています。
+</WhyButton>
 
 ---
 
@@ -232,6 +256,7 @@ node server.js  # エラー: "port already in use"
 
 ### 「サーバーは常に動いている」？
 
+<Callout type="info">
 プログラムなので、起動しなければ動きません。
 
 ```bash
@@ -243,6 +268,7 @@ node server.js
 ```
 
 本番環境では「自動起動」「死んだら再起動」の設定をします。
+</Callout>
 
 ---
 

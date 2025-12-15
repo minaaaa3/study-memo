@@ -64,16 +64,31 @@ npm test
 
 ### テストピラミッド
 
+```mermaid
+graph TD
+    A["E2Eテスト<br/>少ない（遅い、壊れやすい）"]
+    B["結合テスト<br/>中程度"]
+    C["単体テスト<br/>多い（速い、安定）"]
+
+    A --> B
+    B --> C
+
+    style A fill:#ffcccc
+    style B fill:#ffffcc
+    style C fill:#ccffcc
 ```
-        /\
-       /  \
-      / E2E \     少ない（遅い、壊れやすい）
-     /------\
-    /  結合   \    中程度
-   /----------\
-  /   単体     \   多い（速い、安定）
- /--------------\
-```
+
+<WhyButton title="なぜピラミッド型なの？">
+
+テストピラミッドの形には理由があります：
+
+- **単体テスト（下層）**：速く、安定しているので多く書く
+- **結合テスト（中層）**：適度な数で重要な連携をテスト
+- **E2Eテスト（上層）**：遅く壊れやすいので最小限に
+
+下から順にテストすることで、効率的にバグを発見できます。
+
+</WhyButton>
 
 ### 単体テスト（Unit Test）
 
@@ -142,9 +157,17 @@ test('ログインフロー', async ({ page }) => {
 
 ### セットアップ
 
+<StepByStep>
+
+<Step title="Jestをインストール">
+
 ```bash
 npm install --save-dev jest
 ```
+
+</Step>
+
+<Step title="package.jsonにスクリプトを追加">
 
 ```json
 // package.json
@@ -155,6 +178,18 @@ npm install --save-dev jest
   }
 }
 ```
+
+</Step>
+
+<Step title="テストを実行">
+
+```bash
+npm test
+```
+
+</Step>
+
+</StepByStep>
 
 ### 基本的な書き方
 
@@ -273,6 +308,15 @@ await screen.findByText('Loaded');
 ## テストの書き方のコツ
 
 ### AAA パターン
+
+<Callout type="tip">
+**テストの基本パターン：AAA**
+
+テストは3つのステップで構成すると分かりやすくなります：
+- **Arrange（準備）**：テストに必要なデータや状態を用意
+- **Act（実行）**：テスト対象の処理を実行
+- **Assert（確認）**：結果が期待通りか確認
+</Callout>
 
 ```javascript
 test('ユーザーを作成できる', async () => {

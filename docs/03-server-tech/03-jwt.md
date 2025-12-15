@@ -17,6 +17,21 @@ JWTは「映画のチケット」のようなものです。
 
 JWTは3つの部分からなります：
 
+```mermaid
+graph LR
+    A[JWT トークン] --> B[ヘッダー]
+    A --> C[ペイロード]
+    A --> D[署名]
+
+    B --> B1["alg: HS256<br/>typ: JWT"]
+    C --> C1["userId: 1<br/>email: test@test.com<br/>exp: 有効期限"]
+    D --> D1["HMAC-SHA256<br/>改ざん検知"]
+
+    style B fill:#e1f5ff
+    style C fill:#fff4e1
+    style D fill:#ffe1e1
+```
+
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoxNjAwMDg2NDAwfQ.5ub4T_D6R8Oo0c7X_V7K5HFpK0eC8Z3b-Y9VnKD8q5s
   │                              │                                                                │
@@ -46,8 +61,9 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEB0ZXN0LmN
 // → Base64エンコード
 ```
 
-**注意**: ペイロードは**暗号化されていません**。Base64デコードすれば誰でも読めます。
-秘密情報（パスワードなど）を入れてはいけません。
+<Callout type="warning">
+**重要**: ペイロードは**暗号化されていません**。Base64デコードすれば誰でも読めます。秘密情報（パスワードなど）を入れてはいけません。
+</Callout>
 
 ### 署名
 
@@ -58,6 +74,10 @@ HMACSHA256(
 )
 // → 改ざんされていないことを証明
 ```
+
+<Callout type="info">
+署名は「改ざんされていないこと」を保証するだけで、「読めないこと」は保証しません。
+</Callout>
 
 ---
 
@@ -202,16 +222,30 @@ sequenceDiagram
 
 ## JWTの課題と対策
 
+<Callout type="warning">
+JWTはステートレスであるがゆえに、即座の無効化が困難です。この特性を理解して使う必要があります。
+</Callout>
+
 ### 課題1：ログアウトできない問題
 
+```mermaid
+sequenceDiagram
+    participant U as ユーザー
+    participant S as サーバー
+
+    U->>S: ログアウト
+    S->>U: ログアウト完了
+    Note over U,S: でもトークンは有効期限まで使える！
+
+    U->>S: 古いトークンでリクエスト
+    S->>S: 署名検証 → OK
+    S->>U: 認証成功（本当は失敗させたい）
 ```
-JWTは「発行したら期限まで有効」
 
 問題シナリオ:
 1. ユーザーがログアウト
 2. でもトークンはまだ有効
 3. トークンが漏洩してたら、期限まで使われ続ける
-```
 
 **対策：ブラックリスト**
 
@@ -236,7 +270,9 @@ const authenticate = (req, res, next) => {
 };
 ```
 
-でもこれだとセッションと同じでは...？
+<Callout type="info">
+ブラックリストを使うとステートフルになり、セッション管理と同じような複雑さになります。JWTのステートレスというメリットが失われる点に注意してください。
+</Callout>
 
 ### 課題2：トークンが大きい
 
@@ -269,17 +305,51 @@ const authenticate = (req, res, next) => {
 
 短い有効期限のアクセストークンと、長い有効期限のリフレッシュトークンを組み合わせる。
 
+```mermaid
+sequenceDiagram
+    participant C as クライアント
+    participant S as サーバー
+
+    Note over C,S: ログイン時
+    C->>S: ログイン情報
+    S->>C: アクセストークン (15分)<br/>リフレッシュトークン (7日)
+
+    Note over C,S: 通常のAPIリクエスト
+    C->>S: アクセストークンでリクエスト
+    S->>C: レスポンス
+
+    Note over C,S: アクセストークン期限切れ
+    C->>S: アクセストークンでリクエスト
+    S->>C: 401 Token Expired
+
+    Note over C,S: トークン更新
+    C->>S: リフレッシュトークンで更新
+    S->>C: 新しいアクセストークン (15分)
+
+    C->>S: 新しいトークンでリクエスト
+    S->>C: レスポンス
 ```
-アクセストークン:
+
+<Tabs items={[
+  {
+    label: "アクセストークン",
+    content: `**短い有効期限のトークン**
+
 - 有効期限: 15分
 - APIアクセスに使う
-- 漏洩しても被害が限定的
+- 漏洩しても被害が限定的（15分で無効化）
+- LocalStorageに保存可能`
+  },
+  {
+    label: "リフレッシュトークン",
+    content: `**長い有効期限のトークン**
 
-リフレッシュトークン:
 - 有効期限: 7日
 - アクセストークンの更新に使う
-- より厳重に保管（httpOnly Cookie）
-```
+- より厳重に保管（httpOnly Cookie推奨）
+- DBに保存して無効化可能にする`
+  }
+]} />
 
 ### 実装例
 
@@ -338,7 +408,9 @@ app.post('/refresh', (req, res) => {
 
 ### 「JWTは暗号化されている」？
 
-**されていません**。Base64エンコードされているだけで、誰でも読めます。
+<Callout type="warning">
+**JWTは暗号化されていません**。Base64エンコードされているだけで、誰でも読めます。
+</Callout>
 
 ```javascript
 // ペイロードを読む
@@ -347,16 +419,34 @@ const decoded = JSON.parse(atob(payload));
 console.log(decoded);  // { userId: 1, email: "...", ... }
 ```
 
-署名は「改ざんされていないこと」を保証するだけで、「読めないこと」は保証しません。
+<Callout type="info">
+署名は「改ざんされていないこと」を保証するだけで、「読めないこと」は保証しません。パスワードやクレジットカード番号など、秘密情報は絶対にペイロードに入れないでください。
+</Callout>
 
 ### 「JWTの方が安全」？
 
-状況によります。
+<Callout type="warning">
+状況によります。一概に「JWTの方が安全」とは言えません。
+</Callout>
 
-- **漏洩した場合**: セッションなら即座に無効化できる。JWTは期限まで有効
-- **サーバー攻撃**: セッションストアが攻撃されるリスク vs 秘密鍵が漏洩するリスク
+<Tabs items={[
+  {
+    label: "漏洩した場合",
+    content: `**セッション**: サーバー側で即座に無効化できる
 
+**JWT**: 有効期限まで使われ続ける（ブラックリストを使えば無効化できるが、ステートレスのメリットが失われる）`
+  },
+  {
+    label: "サーバー攻撃",
+    content: `**セッション**: セッションストアが攻撃されるリスク
+
+**JWT**: 秘密鍵が漏洩するリスク（秘密鍵が漏れると全トークンを偽造可能）`
+  }
+]} />
+
+<Callout type="tip">
 「ステートレスにしたい」明確な理由がなければ、セッションの方がシンプルで安全です。
+</Callout>
 
 ---
 

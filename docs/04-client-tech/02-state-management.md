@@ -31,31 +31,40 @@ const state = {
 
 ### 何が難しいか
 
-```
-問題1: 状態の場所がバラバラ
-├── ユーザー情報はApp.js
-├── TODOリストはTodoList.js
-├── フィルターはSidebar.js
-└── どこに何があるかわからない
+```mermaid
+graph TD
+    A[状態管理の難しさ] --> B[問題1: 状態の場所がバラバラ]
+    A --> C[問題2: 状態の共有]
+    A --> D[問題3: 状態の更新タイミング]
 
-問題2: 状態の共有
-├── ヘッダーにユーザー名を表示
-├── サイドバーにもユーザー名を表示
-├── どうやって同じデータを参照する？
-└── 片方を更新したらもう片方も更新される？
+    B --> B1[ユーザー情報はApp.js]
+    B --> B2[TODOリストはTodoList.js]
+    B --> B3[フィルターはSidebar.js]
 
-問題3: 状態の更新タイミング
-├── APIからデータを取得
-├── ユーザーがボタンをクリック
-├── タイマーで自動更新
-└── どれが先に来ても正しく動く？
+    C --> C1[ヘッダーにユーザー名を表示]
+    C --> C2[サイドバーにもユーザー名]
+    C --> C3[どうやって同期する?]
+
+    D --> D1[APIからデータ取得]
+    D --> D2[ユーザーのクリック]
+    D --> D3[タイマーで自動更新]
 ```
+
+<Callout type="warning">
+**状態管理が複雑になる3つの理由**:
+1. 状態がアプリ全体に散らばる
+2. 複数のコンポーネントで同じデータを使いたい
+3. 状態の更新が予測不可能になる
+</Callout>
 
 ---
 
 ## Reactでの状態管理
 
-### レベル1：useState（ローカル状態）
+<Tabs>
+<TabItem value="useState" label="Level 1: useState">
+
+### ローカル状態
 
 1つのコンポーネント内でだけ使う状態。
 
@@ -75,7 +84,14 @@ function Counter() {
 // 悪いケース: 他のコンポーネントでも使いたい状態
 ```
 
-### レベル2：Props drilling（バケツリレー）
+<Callout type="tip">
+**使いどころ**: フォームの入力値、モーダルの開閉状態など、そのコンポーネント内だけで完結する状態に使います。
+</Callout>
+
+</TabItem>
+<TabItem value="props" label="Level 2: Props Drilling">
+
+### Props drilling（バケツリレー）
 
 親から子へ、子から孫へ、状態を渡していく。
 
@@ -113,7 +129,14 @@ function Content({ user, setUser }) {
 // → コードが冗長、どこで使ってるかわかりにくい
 ```
 
-### レベル3：Context API（グローバル状態）
+<Callout type="warning">
+**Props Drillingの問題点**: 中間のコンポーネントが関係ないpropsを受け渡すだけになり、コードが複雑化します。
+</Callout>
+
+</TabItem>
+<TabItem value="context" label="Level 3: Context API">
+
+### Context API（グローバル状態）
 
 「どこからでもアクセスできる」状態を作る。
 
@@ -151,9 +174,22 @@ function Profile() {
 // MainやContentを経由しなくていい！
 ```
 
+<Callout type="success">
+**Context APIのメリット**: Props Drillingを解消し、どのコンポーネントからでも状態にアクセスできます。
+</Callout>
+
+</TabItem>
+</Tabs>
+
 ---
 
 ## 状態管理ライブラリ
+
+<WhyButton>
+**なぜContext APIだけでは不十分なのか？**
+
+Context APIは便利ですが、パフォーマンス上の問題があります。状態が1つでも変わると、そのContextを使っている全コンポーネントが再レンダリングされてしまいます。
+</WhyButton>
 
 ### なぜ必要か
 
@@ -165,6 +201,9 @@ Context APIの問題点：
   {/* todosが変わると、userしか使ってないコンポーネントも再レンダリング */}
 </UserContext.Provider>
 ```
+
+<Tabs>
+<TabItem value="zustand" label="Zustand">
 
 ### Zustand（シンプル）
 
@@ -206,6 +245,9 @@ function TodoList() {
   );
 }
 ```
+
+</TabItem>
+<TabItem value="redux" label="Redux Toolkit">
 
 ### Redux（大規模向け）
 
@@ -261,26 +303,54 @@ function TodoList() {
 }
 ```
 
+</TabItem>
+</Tabs>
+
 ---
 
 ## サーバー状態 vs クライアント状態
 
+<Callout type="info">
+**重要な区別**: 状態には「クライアント状態」と「サーバー状態」の2種類があり、それぞれ異なるアプローチで管理します。
+</Callout>
+
 ### 違い
 
-```
-クライアント状態:
-├── UIの状態（モーダルが開いてるか）
-├── フォームの入力値
-└── 選択中のタブ
-→ クライアントだけが知っている
+```mermaid
+graph LR
+    A[状態の種類] --> B[クライアント状態]
+    A --> C[サーバー状態]
 
-サーバー状態:
-├── ユーザー情報
-├── 投稿一覧
-└── 商品データ
-→ サーバーが正確な値を持っている
-→ キャッシュ、再取得、同期が必要
+    B --> B1[UIの状態]
+    B --> B2[フォームの入力値]
+    B --> B3[選択中のタブ]
+    B --> B4[クライアントが真実]
+
+    C --> C1[ユーザー情報]
+    C --> C2[投稿一覧]
+    C --> C3[商品データ]
+    C --> C4[サーバーが真実]
 ```
+
+<Tabs>
+<TabItem value="client" label="クライアント状態">
+- UIの状態（モーダルが開いてるか）
+- フォームの入力値
+- 選択中のタブ
+- **特徴**: クライアントだけが知っている
+
+**管理方法**: useState, Context, Zustand, Redux
+</TabItem>
+
+<TabItem value="server" label="サーバー状態">
+- ユーザー情報
+- 投稿一覧
+- 商品データ
+- **特徴**: サーバーが正確な値を持っている
+
+**管理方法**: TanStack Query（キャッシュ、再取得、同期が必要）
+</TabItem>
+</Tabs>
 
 ### TanStack Query（サーバー状態管理）
 
@@ -325,32 +395,45 @@ function TodoList() {
 
 ## 選び方
 
+```mermaid
+graph TD
+    A[アプリの規模・要件] --> B{サーバーデータ中心?}
+    B -->|Yes| C[TanStack Query]
+    B -->|No| D{規模は?}
+
+    D -->|小規模| E[useState + Context]
+    D -->|中規模| F[Zustand]
+    D -->|大規模| G[Redux Toolkit]
+
+    H[Next.js App Router?] -->|Yes| I[Server Components]
+
+    style C fill:#e1f5e1
+    style E fill:#e3f2fd
+    style F fill:#fff3e0
+    style G fill:#fce4ec
+    style I fill:#f3e5f5
 ```
-「小規模アプリ」「状態が少ない」
-  → useState + Context で十分
 
-「中規模アプリ」「シンプルに保ちたい」
-  → Zustand
+<Callout type="tip">
+**選択のガイドライン**:
 
-「大規模アプリ」「チーム開発」「厳密な状態管理」
-  → Redux Toolkit
-
-「サーバーからのデータが中心」
-  → TanStack Query（+ 最小限のクライアント状態管理）
-
-「Next.js App Router」
-  → Server Components + 最小限のクライアント状態
-```
+- **小規模アプリ・状態が少ない** → useState + Context で十分
+- **中規模アプリ・シンプルに保ちたい** → Zustand
+- **大規模アプリ・チーム開発・厳密な状態管理** → Redux Toolkit
+- **サーバーからのデータが中心** → TanStack Query（+ 最小限のクライアント状態管理）
+- **Next.js App Router** → Server Components + 最小限のクライアント状態
+</Callout>
 
 ---
 
 ## よくある誤解
 
-### 「Reduxは必須」？
+<Accordion title="「Reduxは必須」は本当？">
+**いいえ、必須ではありません。** 小さいアプリにReduxは過剰です。useStateとContextで十分なことが多いです。規模と要件に合わせて選びましょう。
+</Accordion>
 
-小さいアプリにReduxは過剰です。useStateとContextで十分なことが多いです。
-
-### 「全部グローバル状態にすればいい」？
+<Accordion title="「全部グローバル状態にすればいい」は本当？">
+**いいえ、避けるべきです。**
 
 ```jsx
 // 悪い例：モーダルの開閉状態をグローバルに
@@ -367,10 +450,11 @@ function MyComponent() {
   // ...
 }
 ```
+</Accordion>
 
-### 「状態管理ライブラリで全部解決」？
-
-サーバー状態はTanStack Queryなど専用ツールの方が適切です。
+<Accordion title="「状態管理ライブラリで全部解決」は本当？">
+**いいえ、用途で使い分けが必要です。** サーバー状態はTanStack Queryなど専用ツールの方が適切です。クライアント状態とサーバー状態を混同しないようにしましょう。
+</Accordion>
 
 ---
 

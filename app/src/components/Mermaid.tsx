@@ -32,7 +32,8 @@ export function Mermaid({ chart }: MermaidProps) {
         setError(null);
       } catch (err) {
         console.error('Mermaid rendering error:', err);
-        setError('図の描画に失敗しました');
+        const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+        setError(errorMessage);
       }
     };
 
@@ -42,8 +43,9 @@ export function Mermaid({ chart }: MermaidProps) {
   if (error) {
     return (
       <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-        {error}
-        <pre className="mt-2 text-xs overflow-x-auto">{chart}</pre>
+        <div className="font-semibold mb-2">図の描画に失敗しました</div>
+        <div className="text-xs text-red-600 mb-2">{error}</div>
+        <pre className="mt-2 text-xs overflow-x-auto bg-red-100 p-2 rounded">{chart}</pre>
       </div>
     );
   }

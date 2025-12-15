@@ -4,6 +4,29 @@
 
 フォームのバリデーションを自前とライブラリで比較する。
 
+<Callout type="info">
+フォームは、バリデーション、エラー表示、状態管理など、実装すべき要素が多い機能です。React Hook Form + Zod の組み合わせにより、これらを宣言的かつ型安全に実装できます。
+</Callout>
+
+### フォーム実装の進化
+
+```mermaid
+graph LR
+    A[素のuseState] -->|バリデーション<br/>ロジック追加| B[useState + 手動検証]
+    B -->|宣言的に<br/>管理| C[React Hook Form]
+    C -->|型安全な<br/>バリデーション| D[RHF + Zod]
+
+    A -->|コード量: 多<br/>型安全: 無| A
+    B -->|コード量: 多<br/>型安全: 無| B
+    C -->|コード量: 少<br/>型安全: 部分的| C
+    D -->|コード量: 少<br/>型安全: 完全| D
+
+    style A fill:#ffcccc
+    style B fill:#ffddcc
+    style C fill:#ffffcc
+    style D fill:#ccffcc
+```
+
 ---
 
 ## 1. 素のuseState
@@ -110,11 +133,84 @@ function RegisterForm() {
 }
 ```
 
-**問題点**: フィールドが増えると管理が大変。バリデーションロジックが散らばる。
+<Callout type="danger" title="問題点">
+**フィールドが増えると管理が大変**
+- 状態管理が複雑化（values、errors、touched、isSubmitting...）
+- バリデーションロジックが散らばる
+- 再レンダリングが頻繁に発生
+- TypeScript の型推論が効かない
+</Callout>
+
+<Accordion title="useState でフォームを実装する問題を詳しく見る">
+
+**1. 状態管理の複雑化**
+```jsx
+const [values, setValues] = useState({});      // 値
+const [errors, setErrors] = useState({});      // エラー
+const [touched, setTouched] = useState({});    // タッチ状態
+const [isSubmitting, setIsSubmitting] = useState(false);  // 送信状態
+```
+
+フィールドが10個あると、それぞれに対して4つの状態を管理する必要があります。
+
+**2. バリデーションロジックの散在**
+```jsx
+// 入力時のバリデーション
+const handleChange = (e) => { /* バリデーション */ };
+// フォーカス時のバリデーション
+const handleBlur = (e) => { /* バリデーション */ };
+// 送信時のバリデーション
+const validate = () => { /* バリデーション */ };
+```
+
+同じルールを複数箇所で管理する必要があり、メンテナンスが困難です。
+
+**3. 再レンダリングの問題**
+```jsx
+// 1文字入力するたびに全体が再レンダリング
+const handleChange = (e) => {
+  setValues(prev => ({ ...prev, [name]: value }));
+  // ↑ これで全フィールドが再レンダリング
+};
+```
+
+<WhyButton>
+**なぜ再レンダリングが頻繁に起きるのか？**
+
+useState で管理すると、フォーム全体が1つのオブジェクトとして管理されます。1つのフィールドが変更されても、React は「オブジェクト全体が変更された」と判断し、全てのフィールドを再レンダリングします。React Hook Form は Uncontrolled Components を使うことで、この問題を回避します。
+</WhyButton>
+
+</Accordion>
 
 ---
 
 ## 2. React Hook Form + Zod
+
+### React Hook Form の動作原理
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant I as Input Field
+    participant RHF as React Hook Form
+    participant V as Validator (Zod)
+
+    U->>I: 入力
+    I->>RHF: onChange イベント
+    Note over RHF: Uncontrolled<br/>Componentのため<br/>再レンダリングなし
+    RHF->>RHF: 内部状態を更新
+
+    U->>I: フォーム送信
+    I->>RHF: onSubmit イベント
+    RHF->>V: バリデーション実行
+    V-->>RHF: バリデーション結果
+
+    alt バリデーション成功
+        RHF->>U: onSubmit コールバック実行
+    else バリデーション失敗
+        RHF->>I: エラー表示（再レンダリング）
+    end
+```
 
 ```jsx
 import { useForm } from 'react-hook-form';
@@ -199,9 +295,55 @@ function RegisterForm() {
 }
 ```
 
+<Callout type="success" title="React Hook Form + Zod の利点">
+- コード量が大幅に削減（約50%減）
+- バリデーションルールを1箇所で管理
+- 型推論が自動で効く
+- 再レンダリングが最小限
+- エラーハンドリングが自動化
+</Callout>
+
 ---
 
 ## Zodスキーマの例
+
+### Zod の構造
+
+```mermaid
+classDiagram
+    class ZodSchema {
+        +parse(data)
+        +safeParse(data)
+        +refine(validator)
+    }
+
+    class ZodString {
+        +min(length)
+        +max(length)
+        +email()
+        +url()
+        +regex(pattern)
+    }
+
+    class ZodNumber {
+        +min(value)
+        +max(value)
+        +positive()
+        +int()
+    }
+
+    class ZodObject {
+        +shape
+        +extend()
+        +merge()
+    }
+
+    ZodSchema <|-- ZodString
+    ZodSchema <|-- ZodNumber
+    ZodSchema <|-- ZodObject
+
+    note for ZodSchema "型推論:\nz.infer<typeof schema>"
+```
 
 ```typescript
 import { z } from 'zod';
@@ -243,11 +385,27 @@ type User = z.infer<typeof userSchema>;
 // { name: string; age: number; email: string; }
 ```
 
+<WhyButton>
+**なぜZodを使うのか？**
+
+従来のバリデーションライブラリ（Yup等）と比べて：
+- TypeScript のファーストクラスサポート
+- バンドルサイズが小さい（約8KB）
+- サーバーサイドでも同じスキーマを使える
+- エラーメッセージのカスタマイズが簡単
+- パフォーマンスが高い
+
+特に「フロント・バック共通のバリデーション」を実現できる点が大きな利点です。
+</WhyButton>
+
 ---
 
 ## React Hook Form の便利機能
 
-### フィールド配列
+<Tabs>
+<Tab title="フィールド配列">
+
+### 動的なフィールド管理
 
 ```jsx
 import { useFieldArray } from 'react-hook-form';
@@ -280,7 +438,15 @@ function DynamicForm() {
 }
 ```
 
-### ウォッチ
+<Callout type="tip">
+useFieldArray を使うと、配列形式のフィールドを簡単に管理できます。TODO リストや商品一覧など、動的に増減するフィールドに最適です。
+</Callout>
+
+</Tab>
+
+<Tab title="ウォッチ">
+
+### フィールド値の監視
 
 ```jsx
 const { watch } = useForm();
@@ -301,6 +467,13 @@ return (
 );
 ```
 
+<Callout type="info">
+watch を使うことで、フィールドの値に応じて条件付きで表示するフィールドを変更できます。
+</Callout>
+
+</Tab>
+</Tabs>
+
 ---
 
 ## 比較
@@ -318,22 +491,49 @@ return (
 
 ## 選び方
 
-```
-「2-3フィールドの単純なフォーム」
-  → useState で十分
+<Callout type="tip" title="フォームライブラリの選択ガイド">
 
-「複雑なフォーム」「バリデーションが多い」
-  → React Hook Form + Zod
+**useState を使う場合**
+- 2-3フィールドの単純なフォーム
+- バリデーションがほぼ不要
+- プロトタイプや検証用
 
-「サーバーサイドでも同じバリデーション」
-  → Zod（フロント/バック共通で使える）
+**React Hook Form を使う場合**
+- 5個以上のフィールド
+- 複雑なバリデーション
+- パフォーマンスが重要
+
+**React Hook Form + Zod を使う場合**（推奨）
+- TypeScript を使用している
+- フロント・バック共通のバリデーション
+- 型安全性が重要
+- 本番環境のアプリケーション
+
+</Callout>
+
+### 判断フロー
+
+```mermaid
+graph TD
+    A[フォームが必要] --> B{フィールド数は？}
+    B -->|1-3個| C{バリデーションは？}
+    C -->|簡単| D[useState]
+    C -->|複雑| E[RHF + Zod]
+
+    B -->|4個以上| F{TypeScriptを使う？}
+    F -->|はい| E
+    F -->|いいえ| G[React Hook Form]
+
+    style D fill:#ffffcc
+    style G fill:#ccffcc
+    style E fill:#90ee90
 ```
 
 ---
 
 ## よくある誤解
 
-### 「React Hook Formは複雑」？
+<Accordion title="「React Hook Formは複雑」？">
 
 実際は**素のuseStateより簡単**です。
 
@@ -350,7 +550,13 @@ const validate = () => { ... };
 const { register, handleSubmit, formState: { errors } } = useForm();
 ```
 
-### 「バリデーションはフロントだけでいい」？
+<Callout type="success">
+学習コストは低く、一度覚えればどんなフォームでも同じパターンで実装できます。
+</Callout>
+
+</Accordion>
+
+<Accordion title="「バリデーションはフロントだけでいい」？">
 
 **絶対にサーバーでもバリデーションが必要**です。
 
@@ -368,7 +574,20 @@ app.post('/api/users', (req, res) => {
 });
 ```
 
-### 「Zodはフロントエンド専用」？
+<Callout type="danger" title="セキュリティ上の重要なポイント">
+**フロントエンドのバリデーションは、UX向上が目的です。セキュリティ対策ではありません。**
+
+攻撃者は：
+- ブラウザの開発者ツールでバリデーションをスキップ
+- 直接 API にリクエストを送信
+- 悪意のあるデータを送信
+
+必ずサーバーサイドでバリデーションを実装してください。
+</Callout>
+
+</Accordion>
+
+<Accordion title="「Zodはフロントエンド専用」？">
 
 Zodは**サーバーでも使える**ので、スキーマを共通化できます。
 
@@ -379,6 +598,32 @@ export const userSchema = z.object({
   password: z.string().min(8),
 });
 ```
+
+### フロント・バック共通化のメリット
+
+```mermaid
+graph TB
+    Schema[共通スキーマ<br/>schemas.ts]
+
+    Schema --> Frontend[フロントエンド<br/>React Hook Form]
+    Schema --> Backend[バックエンド<br/>Express/Next.js API]
+
+    Frontend --> UX[即座のフィードバック<br/>UX向上]
+    Backend --> Security[サーバー検証<br/>セキュリティ確保]
+
+    style Schema fill:#ffd700
+    style Frontend fill:#61dafb
+    style Backend fill:#68a063
+```
+
+<Callout type="success">
+スキーマを1箇所で管理することで：
+- メンテナンスが容易
+- フロント・バックで齟齬がない
+- TypeScript の型も自動生成
+</Callout>
+
+</Accordion>
 
 ---
 
@@ -403,10 +648,82 @@ npm install react-hook-form zod @hookform/resolvers
 
 ## 演習
 
-1. useStateで登録フォームを作る
-2. React Hook Form + Zodに書き換える
-3. フィールド追加時のコード量を比較する
-4. サーバーサイドでも同じZodスキーマでバリデーション
+<StepByStep>
+
+<Step title="useStateで登録フォームを作る">
+
+基本的なフォームを実装し、問題点を把握します。
+
+1. useState で values、errors、isSubmitting を管理
+2. handleChange、handleSubmit を実装
+3. バリデーション関数を作成
+4. エラー表示を実装
+
+<Callout type="warning">
+フィールドが増えるたびに管理が複雑になることを体感してください。
+</Callout>
+
+</Step>
+
+<Step title="React Hook Form + Zodに書き換える">
+
+1. ライブラリをインストール
+```bash
+npm install react-hook-form zod @hookform/resolvers
+```
+
+2. Zod スキーマを定義
+3. useForm を使ってフォームを実装
+4. register でフィールドを登録
+
+</Step>
+
+<Step title="コード量と機能を比較する">
+
+以下の観点で比較してみましょう：
+
+**コード量**
+- useState版 vs RHF+Zod版 の行数を比較
+
+**機能**
+- バリデーションの網羅性
+- エラーメッセージの表示
+- 型安全性
+
+**パフォーマンス**
+- React DevTools Profiler で再レンダリング回数を確認
+
+</Step>
+
+<Step title="サーバーサイドでも同じスキーマを使用">
+
+1. スキーマを共通ファイルに移動
+```typescript
+// shared/schemas.ts
+export const userSchema = z.object({ ... });
+```
+
+2. フロントエンドで使用
+```typescript
+import { userSchema } from '@/shared/schemas';
+```
+
+3. バックエンドで使用
+```typescript
+import { userSchema } from './shared/schemas';
+app.post('/api/users', (req, res) => {
+  const result = userSchema.safeParse(req.body);
+  // ...
+});
+```
+
+<Callout type="success">
+フロント・バック共通でバリデーションを実装できました！
+</Callout>
+
+</Step>
+
+</StepByStep>
 
 ---
 

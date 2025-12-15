@@ -2,18 +2,34 @@
 
 ## 例え話：レストランの役割分担
 
-レストランには役割分担があります：
+<Callout type="info">
+レストランには役割分担があります
+</Callout>
 
-- **お客さん（クライアント）**: 注文する、食べる、お金を払う
-- **レストラン（サーバー）**: メニューを用意する、調理する、提供する
+```mermaid
+graph LR
+    Client[お客さん<br/>クライアント]
+    Server[レストラン<br/>サーバー]
 
-なぜ分けるのか？
+    Client -->|注文する| Server
+    Client -->|食べる| Server
+    Client -->|お金を払う| Server
 
+    Server -->|メニューを用意| Client
+    Server -->|調理する| Client
+    Server -->|提供する| Client
+
+    style Client fill:#e3f2fd
+    style Server fill:#fff3e0
+```
+
+<WhyButton title="なぜ分けるの？">
 - お客さん全員が厨房で料理するのは非効率
 - 調理器具や食材を各自が持つのは無駄
 - プロが作った方がおいしい
 
 Webも同じ理由で「クライアント」と「サーバー」に分かれています。
+</WhyButton>
 
 ---
 
@@ -21,79 +37,127 @@ Webも同じ理由で「クライアント」と「サーバー」に分かれ�
 
 ### 1. リソースの効率化
 
-```
-クライアント側で全部やる場合：
-├── ユーザーA のPC: DB持つ、処理する、データ保存
-├── ユーザーB のPC: DB持つ、処理する、データ保存
-└── ユーザーC のPC: DB持つ、処理する、データ保存
-→ 全員が同じデータを持つのは無駄
+```mermaid
+graph TD
+    subgraph "クライアント側で全部やる場合"
+    A1[ユーザーA<br/>DB、処理、保存]
+    B1[ユーザーB<br/>DB、処理、保存]
+    C1[ユーザーC<br/>DB、処理、保存]
+    end
 
-サーバーに集約する場合：
-├── サーバー: DB持つ、重い処理する、データ保存
-├── ユーザーA のPC: 表示だけ
-├── ユーザーB のPC: 表示だけ
-└── ユーザーC のPC: 表示だけ
-→ データは1箇所、PCは軽い処理だけ
+    subgraph "サーバーに集約する場合"
+    Server[サーバー<br/>DB、処理、保存]
+    A2[ユーザーA<br/>表示だけ]
+    B2[ユーザーB<br/>表示だけ]
+    C2[ユーザーC<br/>表示だけ]
+
+    Server --> A2
+    Server --> B2
+    Server --> C2
+    end
+
+    style A1 fill:#ffcdd2
+    style B1 fill:#ffcdd2
+    style C1 fill:#ffcdd2
+    style Server fill:#c8e6c9
+    style A2 fill:#e3f2fd
+    style B2 fill:#e3f2fd
+    style C2 fill:#e3f2fd
 ```
+
+<Callout type="success">
+サーバーに集約することで、データは1箇所で管理され、各PCは軽い処理だけで済みます。
+</Callout>
 
 ### 2. データの一貫性
 
-```
-Twitterで考える：
+```mermaid
+graph TD
+    subgraph "クライアント側で管理"
+    A[Aさん端末<br/>いいね数: 100]
+    B[Bさん端末<br/>いいね数: 98]
+    Q[どっちが正しい？]
+    A -.-> Q
+    B -.-> Q
+    end
 
-もしクライアント側で全部やると：
-- Aさんの端末にある「いいね数: 100」
-- Bさんの端末にある「いいね数: 98」
-- どっちが正しい？同期どうする？
+    subgraph "サーバーで管理"
+    Server[サーバー<br/>いいね数: 100]
+    UserA[Aさん]
+    UserB[Bさん]
+    Server --> UserA
+    Server --> UserB
+    end
 
-サーバーで管理すると：
-- サーバー「いいね数は100です」
-- 全員が同じ値を見る
+    style A fill:#ffcdd2
+    style B fill:#ffcdd2
+    style Q fill:#ffcdd2
+    style Server fill:#c8e6c9
+    style UserA fill:#e3f2fd
+    style UserB fill:#e3f2fd
 ```
+
+<Callout type="info">
+Twitterのいいね数のように、全員が同じ値を見る必要がある場合、サーバーで一元管理します。
+</Callout>
 
 ### 3. セキュリティ
 
-```
-クライアント = ユーザーが自由に操作できる
-サーバー = 運営者だけがアクセスできる
+```mermaid
+graph LR
+    Client[クライアント<br/>ユーザーが自由に操作できる]
+    Server[サーバー<br/>運営者だけがアクセスできる]
 
-クライアントに置いてはいけないもの：
-- データベースの接続情報
-- 課金処理のロジック
-- 他のユーザーの個人情報
+    Client -.->|置いてはダメ| NG[DB接続情報<br/>課金処理<br/>個人情報]
+    Server -->|ここで管理| OK[DB接続情報<br/>課金処理<br/>個人情報]
+
+    style Client fill:#ffcdd2
+    style NG fill:#ffcdd2
+    style Server fill:#c8e6c9
+    style OK fill:#c8e6c9
 ```
+
+<Callout type="error">
+クライアント側のコードは誰でも見られます。機密情報は絶対にクライアント側に置いてはいけません。
+</Callout>
 
 ---
 
 ## クライアントとサーバーの責務
 
-### クライアントの仕事
+```mermaid
+graph TD
+    subgraph "クライアントの仕事"
+    C1[画面を表示する UI]
+    C2[ユーザーの操作を受け付ける]
+    C3[サーバーにリクエストを送る]
+    C4[レスポンスを画面に反映する]
+    C5[入力のバリデーション UX用]
+    end
 
-```
-┌──────────────────────────────┐
-│         クライアント           │
-├──────────────────────────────┤
-│ ・画面を表示する（UI）         │
-│ ・ユーザーの操作を受け付ける    │
-│ ・サーバーにリクエストを送る    │
-│ ・レスポンスを画面に反映する    │
-│ ・入力のバリデーション（UX用）  │
-└──────────────────────────────┘
-```
+    subgraph "サーバーの仕事"
+    S1[リクエストを受け付ける]
+    S2[認証・認可<br/>誰が何をできるか]
+    S3[ビジネスロジックの処理]
+    S4[データベースの読み書き]
+    S5[バリデーション<br/>セキュリティ用]
+    S6[レスポンスを返す]
+    end
 
-### サーバーの仕事
+    C3 --> S1
+    S6 --> C4
 
-```
-┌──────────────────────────────┐
-│           サーバー            │
-├──────────────────────────────┤
-│ ・リクエストを受け付ける       │
-│ ・認証・認可（誰が何をできるか）│
-│ ・ビジネスロジックの処理       │
-│ ・データベースの読み書き       │
-│ ・バリデーション（セキュリティ用）│
-│ ・レスポンスを返す            │
-└──────────────────────────────┘
+    style C1 fill:#e3f2fd
+    style C2 fill:#e3f2fd
+    style C3 fill:#e3f2fd
+    style C4 fill:#e3f2fd
+    style C5 fill:#e3f2fd
+    style S1 fill:#fff3e0
+    style S2 fill:#fff3e0
+    style S3 fill:#fff3e0
+    style S4 fill:#fff3e0
+    style S5 fill:#fff3e0
+    style S6 fill:#fff3e0
 ```
 
 ---
@@ -181,14 +245,19 @@ node server.js
 
 ### フロントエンドとバックエンドの境界
 
-```
-ブラウザ ←──────────── HTTP ────────────→ サーバー
-         ↑                                    ↑
-    フロントエンド                       バックエンド
-    (クライアント)                        (サーバー)
+```mermaid
+graph LR
+    Browser[ブラウザ<br/>フロントエンド<br/>クライアント] <-->|HTTP| Server[サーバー<br/>バックエンド<br/>サーバー]
+
+    style Browser fill:#e3f2fd
+    style Server fill:#fff3e0
 ```
 
 ### 判断基準
+
+<Callout type="tip">
+「改ざんされたら困るか？」で判断しましょう
+</Callout>
 
 | 処理内容 | どこでやる？ | 理由 |
 |---------|------------|------|

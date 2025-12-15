@@ -33,22 +33,37 @@ CI/CDがあれば：
 
 コードがプッシュされたら自動で実行：
 
-```yaml
-1. コードを取得
-2. 依存関係をインストール
-3. リンター実行（コード規約チェック）
-4. テスト実行
-5. ビルド
+```mermaid
+flowchart LR
+    A[コードをプッシュ] --> B[コードを取得]
+    B --> C[依存関係をインストール]
+    C --> D[リンター実行]
+    D --> E[テスト実行]
+    E --> F[ビルド]
+    F --> G{成功?}
+    G -->|Yes| H[CI完了]
+    G -->|No| I[通知・エラー]
+
+    style A fill:#e1f5ff
+    style H fill:#ccffcc
+    style I fill:#ffcccc
 ```
 
 ### CD（Continuous Delivery/Deployment）
 
 CIが通ったら自動で実行：
 
-```yaml
-6. 本番環境にデプロイ
-   または
-6. ステージング環境にデプロイ → 手動で本番へ
+```mermaid
+flowchart LR
+    A[CI完了] --> B{デプロイ戦略}
+    B -->|自動| C[本番環境にデプロイ]
+    B -->|手動承認| D[ステージング環境]
+    D --> E[手動確認]
+    E --> F[本番環境にデプロイ]
+
+    style A fill:#ccffcc
+    style C fill:#ccffff
+    style F fill:#ccffff
 ```
 
 ---
@@ -229,7 +244,13 @@ run: |
   curl -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" ...
 ```
 
-設定場所: リポジトリ → Settings → Secrets and variables → Actions
+<Callout type="warning">
+**Secretsの設定場所**
+
+リポジトリ → Settings → Secrets and variables → Actions
+
+絶対にSecretsの値をログに出力したり、コードに直接書いたりしないでください。
+</Callout>
 
 ---
 

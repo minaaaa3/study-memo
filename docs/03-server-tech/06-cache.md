@@ -17,31 +17,51 @@ Webの世界でも同じです。一度取得したデータを保存してお�
 
 ### キャッシュがないと何が起きる？
 
-```text
-毎回データベースに問い合わせると...
+```mermaid
+sequenceDiagram
+    participant U as ユーザー
+    participant S as サーバー
+    participant D as データベース
 
-ユーザー → サーバー → データベース → サーバー → ユーザー
-            ↑           ↑
-         100ms       200ms
-
-合計: 300ms以上かかる
+    Note over U,D: 毎回DBに問い合わせ
+    U->>S: リクエスト
+    S->>D: データ取得 (200ms)
+    D->>S: データ
+    S->>U: レスポンス (100ms)
+    Note over U,S: 合計: 300ms
 ```
 
-同じデータを100人が見に来たら、100回データベースに問い合わせることになります。
+<Callout type="warning">
+同じデータを100人が見に来たら、100回データベースに問い合わせることになります。サーバーとDBの負荷が高くなります。
+</Callout>
 
 ### キャッシュがあると
 
-```text
-2回目以降は...
+```mermaid
+sequenceDiagram
+    participant U as ユーザー
+    participant S as サーバー
+    participant C as キャッシュ
+    participant D as データベース
 
-ユーザー → サーバー → キャッシュ → サーバー → ユーザー
-            ↑           ↑
-         100ms        1ms
+    Note over U,D: 1回目: DBから取得
+    U->>S: リクエスト
+    S->>D: データ取得 (200ms)
+    D->>S: データ
+    S->>C: キャッシュに保存
+    S->>U: レスポンス (100ms)
 
-合計: 約100ms（3倍速い！）
+    Note over U,D: 2回目以降: キャッシュから取得
+    U->>S: リクエスト
+    S->>C: データ取得 (1ms)
+    C->>S: データ
+    S->>U: レスポンス (100ms)
+    Note over U,S: 合計: 約100ms（3倍速い！）
 ```
 
+<Callout type="tip">
 一度取得したデータを覚えておけば、データベースに問い合わせなくて済みます。
+</Callout>
 
 ---
 
@@ -49,14 +69,59 @@ Webの世界でも同じです。一度取得したデータを保存してお�
 
 キャッシュは「どこに保存するか」で種類が分かれます。
 
-| キャッシュの場所 | 説明 | 例 |
-|-----------------|------|-----|
-| ブラウザ | ユーザーのPC/スマホに保存 | 画像、CSS、JS |
-| CDN | 世界中のサーバーに保存 | 静的ファイル、API応答 |
-| サーバー（メモリ） | アプリのメモリに保存 | よく使うデータ |
-| Redis | 専用のキャッシュサーバー | セッション、DB結果 |
+```mermaid
+graph TD
+    A[ユーザー] --> B[ブラウザキャッシュ<br/>最速]
+    B --> C[CDNキャッシュ<br/>速い]
+    C --> D[サーバーメモリ<br/>普通]
+    D --> E[Redis<br/>普通]
+    E --> F[データベース<br/>遅い]
 
-**ユーザーに近いほど速い**です。ブラウザキャッシュが最速で、データベースが最も遅い。
+    style B fill:#e1ffe1
+    style C fill:#e1f5ff
+    style D fill:#fff4e1
+    style E fill:#fff4e1
+    style F fill:#ffe1e1
+```
+
+<Callout type="info">
+**ユーザーに近いほど速い**です。ブラウザキャッシュが最速で、データベースが最も遅くなります。
+</Callout>
+
+<Tabs items={[
+  {
+    label: "ブラウザキャッシュ",
+    content: `**ユーザーのPC/スマホに保存**
+
+- 速度: 最速
+- 用途: 画像、CSS、JS
+- 制御: Cache-Controlヘッダー`
+  },
+  {
+    label: "CDN",
+    content: `**世界中のサーバーに保存**
+
+- 速度: 速い
+- 用途: 静的ファイル、API応答
+- 制御: s-maxageヘッダー`
+  },
+  {
+    label: "サーバーメモリ",
+    content: `**アプリのメモリに保存**
+
+- 速度: 普通
+- 用途: よく使うデータ
+- 欠点: 再起動で消える`
+  },
+  {
+    label: "Redis",
+    content: `**専用のキャッシュサーバー**
+
+- 速度: 普通
+- 用途: セッション、DB結果
+- 利点: 永続化、複数サーバーで共有可能`
+  }
+]} />
 
 ---
 
@@ -79,13 +144,53 @@ app.get("/api/products", (req, res) => {
 
 ### よく使う設定
 
-| 設定 | 意味 | 使いどころ |
-|------|------|-----------|
-| `max-age=3600` | 3600秒（1時間）キャッシュ | 更新が少ないデータ |
-| `no-store` | キャッシュしない | 個人情報、リアルタイムデータ |
-| `no-cache` | キャッシュするが毎回確認 | 更新頻度が読めないデータ |
-| `public` | 誰でもキャッシュ可 | 全員に同じ内容を返すAPI |
-| `private` | ブラウザだけキャッシュ可 | ユーザー固有のデータ |
+<Tabs items={[
+  {
+    label: "max-age",
+    content: `**キャッシュの有効期限（秒）**
+
+\`\`\`javascript
+res.set("Cache-Control", "max-age=3600"); // 1時間
+\`\`\`
+
+**使いどころ**: 更新が少ないデータ（商品一覧など）`
+  },
+  {
+    label: "no-store",
+    content: `**キャッシュしない**
+
+\`\`\`javascript
+res.set("Cache-Control", "no-store");
+\`\`\`
+
+**使いどころ**: 個人情報、リアルタイムデータ`
+  },
+  {
+    label: "no-cache",
+    content: `**キャッシュするが毎回サーバーに確認**
+
+\`\`\`javascript
+res.set("Cache-Control", "no-cache");
+\`\`\`
+
+**使いどころ**: 更新頻度が読めないデータ`
+  },
+  {
+    label: "public / private",
+    content: `**キャッシュの共有範囲**
+
+\`\`\`javascript
+// public: CDNなどでもキャッシュ可
+res.set("Cache-Control", "public, max-age=3600");
+
+// private: ブラウザだけキャッシュ可
+res.set("Cache-Control", "private, max-age=3600");
+\`\`\`
+
+**public**: 全員に同じ内容を返すAPI
+**private**: ユーザー固有のデータ`
+  }
+]} />
 
 ### 実際の設定例
 
@@ -262,41 +367,61 @@ async function updateUser(id, data) {
 
 ## キャッシュの削除（無効化）
 
-キャッシュで一番難しいのは「いつ削除するか」です。
+<Callout type="warning">
+キャッシュで一番難しいのは「いつ削除するか」です。削除タイミングを誤ると、古いデータを返し続けてしまいます。
+</Callout>
 
-### 方法1: 時間で自動削除（TTL）
+<Tabs items={[
+  {
+    label: "時間で自動削除（TTL）",
+    content: `**有効期限を設定して自動削除**
 
-```javascript
+\`\`\`javascript
 // 1時間後に自動で消える
 await redis.setex("key", 3600, "value");
-```
+\`\`\`
 
 **使いどころ**: 多少古くてもいいデータ（ランキング、統計など）
 
-### 方法2: データ更新時に削除
+**メリット**: シンプル、実装が簡単
+**デメリット**: 期限内は古いデータが返される可能性`
+  },
+  {
+    label: "データ更新時に削除",
+    content: `**データを更新したらキャッシュも削除**
 
-```javascript
+\`\`\`javascript
 // ユーザーを更新したら、キャッシュも消す
 async function updateUser(id, data) {
   await db.users.update({ where: { id }, data });
-  await redis.del(`user:${id}`);
+  await redis.del(\`user:\${id}\`);
 }
-```
+\`\`\`
 
 **使いどころ**: 常に最新を表示したいデータ（プロフィールなど）
 
-### 方法3: まとめて削除
+**メリット**: 常に最新データを保証
+**デメリット**: 実装が複雑、削除漏れのリスク`
+  },
+  {
+    label: "まとめて削除",
+    content: `**パターンに一致するキャッシュを全削除**
 
-```javascript
+\`\`\`javascript
 // 「user:」で始まるキャッシュをすべて削除
 // ※ 本番では scan を使う（keys は遅い）
 const keys = await redis.keys("user:*");
 if (keys.length > 0) {
   await redis.del(...keys);
 }
-```
+\`\`\`
 
 **使いどころ**: 大きな変更があったとき（マスターデータ更新など）
+
+**メリット**: 一括で無効化できる
+**デメリット**: keys コマンドは本番環境では遅い（scan を使う）`
+  }
+]} />
 
 ---
 
@@ -340,42 +465,71 @@ revalidateTag("posts");
 
 ### 「キャッシュすれば必ず速くなる」？
 
-**そうとは限りません。**
+<Callout type="warning">
+そうとは限りません。キャッシュが効かないケースもあります。
+</Callout>
 
-キャッシュが効かないケース：
+**キャッシュが効かないケース**:
 - 毎回違うデータを取得する（ユニークなリクエスト）
 - キャッシュの有効期限が短すぎる
 - キャッシュの管理コストがメリットを上回る
 
 ### 「キャッシュ時間は長いほど良い」？
 
-**データの性質に合わせる**必要があります。
+<Callout type="info">
+**データの性質に合わせる**必要があります。長ければ良いというわけではありません。
+</Callout>
 
-```javascript
-// 商品マスター: めったに変わらない → 長め
+<Tabs items={[
+  {
+    label: "商品マスター",
+    content: `**めったに変わらない → 長め**
+
+\`\`\`javascript
 await redis.setex("products", 86400, data); // 1日
+\`\`\``
+  },
+  {
+    label: "タイムライン",
+    content: `**よく変わる → 短め**
 
-// タイムライン: よく変わる → 短め
+\`\`\`javascript
 await redis.setex("timeline", 60, data); // 1分
+\`\`\``
+  },
+  {
+    label: "在庫数",
+    content: `**リアルタイム性が重要 → キャッシュしない**
 
-// 在庫数: リアルタイム性が重要 → キャッシュしない
+\`\`\`javascript
 // await redis.set("stock", data); // ← やらない
-```
+\`\`\`
+
+在庫数は常に最新である必要があるため、キャッシュは不適切です。`
+  }
+]} />
 
 ### 「Redis を入れれば解決」？
 
-**段階的に導入**するのがおすすめです。
+<Callout type="tip">
+**段階的に導入**するのがおすすめです。いきなりRedisを入れる必要はありません。
+</Callout>
 
-```text
-Step 1: まず HTTP キャッシュヘッダーを設定
-        → これだけで十分なことも多い
+<StepByStep>
 
-Step 2: 問題があれば Redis を導入
-        → 本当に必要なデータだけキャッシュ
+#### Step 1: HTTPキャッシュヘッダーを設定
 
-Step 3: 問題が起きたら戦略を見直す
-        → キャッシュの削除タイミングを調整
-```
+まずはCache-Controlヘッダーを設定。これだけで十分なことも多い。
+
+#### Step 2: 問題があればRedisを導入
+
+本当に必要なデータだけキャッシュする。全てをキャッシュする必要はない。
+
+#### Step 3: 戦略を見直す
+
+問題が起きたらキャッシュの削除タイミングを調整。無効化戦略を改善する。
+
+</StepByStep>
 
 ---
 

@@ -61,6 +61,10 @@ server.listen(3000, () => {
 - ルーティングがif文の嵐
 - `/users/123` のようなパスパラメータの処理が面倒
 
+<Callout type="tip">
+学習目的なら素のNode.jsで一度作ってみると、Expressの便利さがよくわかります。
+</Callout>
+
 ### レベル2：Express
 
 ```javascript
@@ -117,25 +121,43 @@ node level2-express.js
 
 ### ディレクトリ構成
 
-```
-my-server/
-├── src/
-│   ├── index.js        # エントリーポイント
-│   ├── routes/         # ルーティング定義
-│   │   ├── users.js
-│   │   └── posts.js
-│   ├── controllers/    # リクエスト処理
-│   │   ├── userController.js
-│   │   └── postController.js
-│   ├── services/       # ビジネスロジック
-│   │   └── userService.js
-│   ├── models/         # データ構造
-│   │   └── User.js
-│   └── middleware/     # 共通処理
-│       ├── auth.js
-│       └── errorHandler.js
-├── package.json
-└── .env                # 環境変数
+```mermaid
+graph TB
+    root["my-server/"]
+    src["src/"]
+    routes["routes/<br/>(ルーティング定義)"]
+    controllers["controllers/<br/>(リクエスト処理)"]
+    services["services/<br/>(ビジネスロジック)"]
+    models["models/<br/>(データ構造)"]
+    middleware["middleware/<br/>(共通処理)"]
+
+    root --> src
+    root --> package["package.json"]
+    root --> env[".env<br/>(環境変数)"]
+
+    src --> index["index.js<br/>(エントリーポイント)"]
+    src --> routes
+    src --> controllers
+    src --> services
+    src --> models
+    src --> middleware
+
+    routes --> users_route["users.js"]
+    routes --> posts_route["posts.js"]
+    controllers --> user_ctrl["userController.js"]
+    controllers --> post_ctrl["postController.js"]
+    services --> user_svc["userService.js"]
+    models --> user_model["User.js"]
+    middleware --> auth["auth.js"]
+    middleware --> error["errorHandler.js"]
+
+    style root fill:#e1f5ff
+    style src fill:#fff4e6
+    style routes fill:#c8e6c9
+    style controllers fill:#c8e6c9
+    style services fill:#c8e6c9
+    style models fill:#c8e6c9
+    style middleware fill:#c8e6c9
 ```
 
 ### 実装例
@@ -232,18 +254,23 @@ module.exports = (err, req, res, next) => {
 
 ### リクエストの流れ
 
-```
-リクエスト
-    ↓
-[ミドルウェア1] ログを出力
-    ↓
-[ミドルウェア2] 認証チェック
-    ↓
-[ミドルウェア3] JSONパース
-    ↓
-[ルートハンドラ] 実際の処理
-    ↓
-レスポンス
+```mermaid
+sequenceDiagram
+    participant Client as クライアント
+    participant MW1 as ミドルウェア1<br/>(ログ出力)
+    participant MW2 as ミドルウェア2<br/>(認証チェック)
+    participant MW3 as ミドルウェア3<br/>(JSONパース)
+    participant Handler as ルートハンドラ<br/>(実際の処理)
+
+    Client->>MW1: リクエスト
+    MW1->>MW1: ログ記録
+    MW1->>MW2: next()
+    MW2->>MW2: トークン検証
+    MW2->>MW3: next()
+    MW3->>MW3: JSONパース
+    MW3->>Handler: next()
+    Handler->>Handler: 処理実行
+    Handler->>Client: レスポンス
 ```
 
 ### ミドルウェアの書き方
@@ -279,16 +306,27 @@ app.get('/public', (req, res) => {  // 認証なしでアクセス可
 
 ### なぜ必要か
 
-```javascript
-// ダメな例：コードに直接書く
-const dbPassword = 'supersecret123';
+<Callout type="error">
+**ダメな例：コードに直接書く**
 
-// 良い例：環境変数から読む
+```javascript
+const dbPassword = 'supersecret123';
+```
+
+パスワードがGitに含まれてしまいます！
+</Callout>
+
+<Callout type="success">
+**良い例：環境変数から読む**
+
+```javascript
 const dbPassword = process.env.DB_PASSWORD;
 ```
 
+メリット：
 - パスワードがGitHubに公開されない
 - 開発/本番で設定を切り替えられる
+</Callout>
 
 ### 使い方
 
@@ -431,6 +469,7 @@ curl -X DELETE http://localhost:3000/api/users/1
 
 ### 「このコードで本番運用できる」？
 
+<Callout type="warning">
 このままでは足りません。本番に必要なもの：
 
 - データベース（今は変数に保存してるだけ）
@@ -441,6 +480,7 @@ curl -X DELETE http://localhost:3000/api/users/1
 - CORS設定
 - レート制限
 - etc...
+</Callout>
 
 ---
 

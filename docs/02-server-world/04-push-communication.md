@@ -50,13 +50,27 @@ ws.onmessage = (event) => {
 
 ## Push型の種類
 
-```
-Push型通信
-├── WebSocket       ← リアルタイム双方向（ブラウザ↔サーバー）
-├── Server-Sent Events (SSE) ← サーバー→クライアントの一方向
-├── Webhook         ← サーバー→サーバーの通知
-├── Message Queue   ← 非同期のメッセージ配送
-└── Pub/Sub         ← 購読モデル
+```mermaid
+graph TB
+    Push["Push型通信"]
+    WS["WebSocket<br/>(リアルタイム双方向)"]
+    SSE["Server-Sent Events<br/>(サーバー→クライアント)"]
+    Webhook["Webhook<br/>(サーバー→サーバー)"]
+    MQ["Message Queue<br/>(非同期メッセージ)"]
+    PubSub["Pub/Sub<br/>(購読モデル)"]
+
+    Push --> WS
+    Push --> SSE
+    Push --> Webhook
+    Push --> MQ
+    Push --> PubSub
+
+    style Push fill:#e1f5ff
+    style WS fill:#c8e6c9
+    style SSE fill:#c8e6c9
+    style Webhook fill:#c8e6c9
+    style MQ fill:#c8e6c9
+    style PubSub fill:#c8e6c9
 ```
 
 ---
@@ -68,16 +82,25 @@ Push型通信
 通常のHTTPは「1リクエスト→1レスポンス」で接続が切れます。
 WebSocketは「接続を維持」して、双方向に通信します。
 
-```
-HTTP:
-クライアント →リクエスト→ サーバー
-クライアント ←レスポンス← サーバー
-（接続終了）
+```mermaid
+sequenceDiagram
+    participant Client as クライアント
+    participant Server as サーバー
 
-WebSocket:
-クライアント ↔ 接続維持 ↔ サーバー
-     いつでもメッセージを送受信
-（明示的に切断するまで維持）
+    Note over Client,Server: HTTP通信（接続は都度切断）
+    Client->>Server: リクエスト
+    Server->>Client: レスポンス
+    Note over Client,Server: 接続終了
+
+    Note over Client,Server: WebSocket通信（接続を維持）
+    Client->>Server: 接続開始
+    Note over Client,Server: 接続維持
+    Client->>Server: メッセージ送信
+    Server->>Client: メッセージ送信
+    Client->>Server: メッセージ送信
+    Server->>Client: メッセージ送信
+    Note over Client,Server: いつでも双方向通信可能
+    Client->>Server: 切断
 ```
 
 ### コードで確認
@@ -138,10 +161,15 @@ ws.send('新しいメッセージ');
 
 ### 使いどころ
 
-- チャットアプリ
-- リアルタイム通知
-- 共同編集（Google Docsのような）
-- オンラインゲーム
+<Callout type="info">
+WebSocketが適している場面：
+
+- **チャットアプリ**: メッセージの送受信が双方向
+- **リアルタイム通知**: サーバーから即座に通知が必要
+- **共同編集**: Google Docsのような複数ユーザーでの同時編集
+- **オンラインゲーム**: プレイヤー間のリアルタイム通信
+- **株価・暗号通貨のティッカー**: リアルタイムの価格更新
+</Callout>
 
 ---
 
@@ -251,10 +279,13 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res
 
 ### セキュリティ
 
-Webhookは「誰かが偽のリクエストを送る」リスクがあります。
+<Callout type="warning">
+Webhookは「誰かが偽のリクエストを送る」リスクがあります。署名検証で本物のリクエストか確認しましょう。
+</Callout>
+
+<AccordionSingle title="署名検証の実装例（Stripe）">
 
 ```javascript
-// 署名検証（Stripeの例）
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -271,6 +302,10 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res
   }
 });
 ```
+
+署名検証により、正規のサービスからのリクエストであることを保証します。
+
+</AccordionSingle>
 
 ---
 
@@ -293,22 +328,48 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res
 
 ### なぜ必要か
 
-```
+<Callout type="warning">
+**同期処理の問題点**
+
 例：会員登録時にウェルカムメールを送る
 
-同期処理だと：
-1. ユーザー情報保存
-2. メール送信（3秒かかる）
-3. レスポンス
-→ ユーザーは3秒以上待たされる
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant API as APIサーバー
+    participant Mail as メールサーバー
 
-非同期処理だと：
-1. ユーザー情報保存
-2. 「メール送信」をキューに追加
-3. 即レスポンス
-→ ユーザーはすぐに次の画面へ
-→ メールは裏で送られる
+    User->>API: 会員登録リクエスト
+    API->>API: ユーザー情報保存
+    API->>Mail: メール送信（3秒かかる）
+    Note over API,Mail: 処理待ち...
+    Mail->>API: 送信完了
+    API->>User: レスポンス
+    Note over User: 3秒以上待たされる
 ```
+</Callout>
+
+<Callout type="success">
+**非同期処理（Message Queue）の利点**
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant API as APIサーバー
+    participant Queue as キュー
+    participant Worker as ワーカー
+    participant Mail as メールサーバー
+
+    User->>API: 会員登録リクエスト
+    API->>API: ユーザー情報保存
+    API->>Queue: メール送信ジョブを追加
+    API->>User: 即座にレスポンス
+    Note over User: すぐに次の画面へ
+    Worker->>Queue: ジョブ取得
+    Worker->>Mail: メール送信
+    Note over Worker,Mail: 裏で処理
+```
+</Callout>
 
 ### 代表的なサービス
 
@@ -366,16 +427,39 @@ worker.on('failed', (job, err) => {
 
 「発行者」がメッセージを出し、「購読者」が受け取るモデル。
 
-```
-Pub/Sub:
-Publisher →「新記事です」→ トピック →→→ Subscriber A（メール通知）
-                               →→→ Subscriber B（Slack通知）
-                               →→→ Subscriber C（分析システム）
+```mermaid
+graph LR
+    Publisher["Publisher<br/>(発行者)"]
+    Topic["トピック:<br/>article:created"]
+    SubA["Subscriber A<br/>(メール通知)"]
+    SubB["Subscriber B<br/>(Slack通知)"]
+    SubC["Subscriber C<br/>(分析システム)"]
+
+    Publisher -->|"新記事です"| Topic
+    Topic --> SubA
+    Topic --> SubB
+    Topic --> SubC
+
+    style Publisher fill:#e1f5ff
+    style Topic fill:#fff4e6
+    style SubA fill:#c8e6c9
+    style SubB fill:#c8e6c9
+    style SubC fill:#c8e6c9
 ```
 
-Message Queueとの違い：
-- **Queue**: 1つのメッセージは1つのワーカーだけが処理
-- **Pub/Sub**: 1つのメッセージを複数の購読者が受け取れる
+<WhyButton title="Message QueueとPub/Subの違いは？">
+**Message Queue（キュー）:**
+- 1つのメッセージは1つのワーカーだけが処理
+- 「仕事を分散させる」用途
+
+**Pub/Sub（パブサブ）:**
+- 1つのメッセージを複数の購読者が受け取れる
+- 「イベントを複数のシステムに通知する」用途
+
+例：ユーザー登録イベント
+- Queue: 登録メール送信（1つのワーカーが処理）
+- Pub/Sub: メール送信、Slack通知、分析システムに記録（全員が受け取る）
+</WhyButton>
 
 ### 代表的なサービス
 
@@ -447,21 +531,15 @@ subscriber.on('message', (channel, message) => {
 
 ### 「全部WebSocketにすればいい」？
 
+<Callout type="warning">
 接続を維持するコストがあります。
 
 - サーバーのメモリを消費
 - 接続数に制限がある
 - 一方向で十分ならSSEの方が軽い
 
-### 「Message QueueとPub/Subは同じ」？
-
-```
-Message Queue:
-1メッセージ → 1ワーカー（誰か1人が処理）
-
-Pub/Sub:
-1メッセージ → 全購読者（全員が受け取る）
-```
+リアルタイム双方向通信が本当に必要か検討しましょう。
+</Callout>
 
 ---
 

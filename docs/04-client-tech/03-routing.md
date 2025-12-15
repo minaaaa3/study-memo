@@ -14,6 +14,28 @@ URLを見て、対応するページを表示する仕組みがルーティン�
 
 ## 核心：SPAでのルーティング
 
+```mermaid
+graph TD
+    subgraph "従来のWebサイト"
+    A1[ブラウザ] -->|/| B1[サーバー]
+    B1 -->|index.html| A1
+    A1 -->|/about| B1
+    B1 -->|about.html| A1
+    A1 -->|/contact| B1
+    B1 -->|contact.html| A1
+    end
+
+    subgraph "SPA (Single Page Application)"
+    A2[ブラウザ] -->|初回のみ| B2[サーバー]
+    B2 -->|app.js + HTML| A2
+    A2 -->|/about| A2
+    A2 -->|/contact| A2
+    end
+```
+
+<Tabs>
+<TabItem value="traditional" label="従来のWebサイト">
+
 ### 従来のWebサイト
 
 ```
@@ -23,6 +45,14 @@ URLを見て、対応するページを表示する仕組みがルーティン�
 
 毎回サーバーに問い合わせ、ページ全体を読み込み直す
 ```
+
+**特徴**:
+- ページ遷移のたびにサーバーとの通信が発生
+- ページ全体がリロードされる
+- 遷移時に画面が白くなる
+
+</TabItem>
+<TabItem value="spa" label="SPA">
 
 ### SPA（Single Page Application）
 
@@ -34,9 +64,23 @@ URLを見て、対応するページを表示する仕組みがルーティン�
 サーバーに問い合わせず、JavaScriptで画面を切り替える
 ```
 
+**特徴**:
+- 初回のみサーバーからアプリをダウンロード
+- ページ遷移はJavaScriptで画面を書き換え
+- スムーズな画面遷移
+
+</TabItem>
+</Tabs>
+
 ---
 
 ## History API
+
+<WhyButton>
+**なぜHistory APIが必要なのか？**
+
+SPAではページ遷移せずに画面を切り替えますが、URLも変更しないとブラウザの戻るボタンが使えません。History APIを使えば、ページをリロードせずにURLを変更できます。
+</WhyButton>
 
 SPAルーティングの基盤となるブラウザAPI。
 
@@ -235,7 +279,14 @@ function ProtectedRoute({ children }) {
 
 ## Next.js のルーティング
 
+<Callout type="info">
+**ファイルベースルーティング**: Next.jsではファイル構造がそのままURLになります。React Routerのように設定ファイルを書く必要がありません。
+</Callout>
+
 ファイルベースルーティング。ファイル構造がそのままURLになる。
+
+<Tabs>
+<TabItem value="pages" label="Pages Router (旧)">
 
 ### Pages Router（従来）
 
@@ -262,6 +313,9 @@ export default function UserDetail() {
 }
 ```
 
+</TabItem>
+<TabItem value="app" label="App Router (新)">
+
 ### App Router（新しい方式）
 
 ```
@@ -282,6 +336,13 @@ export default function UserDetail({ params }) {
   return <h1>ユーザー {params.id}</h1>;
 }
 ```
+
+</TabItem>
+</Tabs>
+
+<Callout type="tip">
+**推奨**: 新規プロジェクトではApp Routerを使いましょう。Server Componentsなどの新機能が使えます。
+</Callout>
 
 ---
 
@@ -318,17 +379,32 @@ function Search() {
 
 ## よくある問題
 
+<Callout type="warning">
+**SPAの落とし穴**: リロードすると404エラーになることがあります。
+</Callout>
+
 ### リロードすると404
 
+```mermaid
+sequenceDiagram
+    participant B as ブラウザ
+    participant S as サーバー
+
+    B->>S: GET /about
+    S->>S: /about ファイルを探す
+    S->>B: 404 Not Found
+
+    Note over B,S: 解決: 全てのリクエストを<br/>index.htmlに向ける
 ```
-SPAをNginxやApacheでホスティングする場合:
 
-1. /about にアクセス
-2. サーバーは /about ファイルを探す
-3. そんなファイルはない → 404
+<StepByStep>
+1. ユーザーが /about にアクセス
+2. サーバーは /about というファイルを探す
+3. そんなファイルはない → 404エラー
+4. **解決策**: 全てのリクエストを index.html に向ける設定
+</StepByStep>
 
-解決策: 全てのリクエストを index.html に向ける
-
+```nginx
 # Nginx
 location / {
   try_files $uri /index.html;
@@ -363,9 +439,8 @@ function ScrollToTop() {
 
 ## よくある誤解
 
-### 「SPAは遷移が速い」？
-
-必ずしもそうではありません。
+<Accordion title="「SPAは遷移が速い」は本当？">
+**必ずしもそうではありません。**
 
 ```
 SPA:
@@ -378,11 +453,11 @@ SSR/SSG:
 ```
 
 Next.jsなどは「プリフェッチ」で遷移も速くしています。
+</Accordion>
 
-### 「ルーティングは難しい」？
-
-基本は「URLとコンポーネントの対応」です。
-ライブラリを使えばシンプルに書けます。
+<Accordion title="「ルーティングは難しい」は本当？">
+**いいえ、基本はシンプルです。** 基本は「URLとコンポーネントの対応」です。React RouterやNext.jsなどのライブラリを使えばシンプルに書けます。
+</Accordion>
 
 ---
 

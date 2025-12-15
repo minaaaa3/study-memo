@@ -3,6 +3,19 @@ import { CodeBlock } from './CodeBlock';
 import { WhyButton, Concept } from './WhyButton';
 import { ComparisonTable, SimpleComparison } from './ComparisonTable';
 import { Mermaid } from './Mermaid';
+import {
+  Accordion,
+  AccordionSingle,
+  Tabs,
+  Tab,
+  TabItem,
+  Timeline,
+  Step,
+  StepByStep,
+  Callout,
+  InteractiveDemo,
+  StateDemo,
+} from './UIComponents';
 import Link from 'next/link';
 
 // Markdown内のリンクをNext.jsのLinkに変換
@@ -350,4 +363,17 @@ export const mdxComponents: MDXComponentsType = {
   ComparisonTable,
   SimpleComparison,
   Mermaid,
+
+  // Phase 5: UI拡張コンポーネント
+  Accordion,
+  AccordionSingle,
+  Tabs,
+  Tab,
+  TabItem,
+  Timeline,
+  Step,
+  StepByStep,
+  Callout,
+  InteractiveDemo,
+  StateDemo,
 };

@@ -207,6 +207,10 @@ app.post('/logout', (req, res) => {
 
 ## Cookieの重要な設定
 
+<Callout type="warning">
+Cookieの設定を間違えると、セキュリティ上の重大な脆弱性につながります。必ず適切に設定してください。
+</Callout>
+
 ```javascript
 res.cookie('sessionId', value, {
   httpOnly: true,      // 必須：XSS対策
@@ -218,9 +222,12 @@ res.cookie('sessionId', value, {
 });
 ```
 
-### httpOnly
+<Tabs items={[
+  {
+    label: "httpOnly",
+    content: `**JavaScriptからのアクセスを防ぐ**
 
-```javascript
+\`\`\`javascript
 // httpOnly: false の場合
 document.cookie  // JavaScriptでCookieにアクセスできる
 // → XSS攻撃でセッションIDを盗まれる可能性
@@ -228,21 +235,29 @@ document.cookie  // JavaScriptでCookieにアクセスできる
 // httpOnly: true の場合
 document.cookie  // セッションIDは見えない
 // → 盗まれにくい
-```
+\`\`\`
 
-### secure
+セッションIDは必ず \`httpOnly: true\` に設定してください。`
+  },
+  {
+    label: "secure",
+    content: `**HTTPS通信のみに制限**
 
-```javascript
+\`\`\`javascript
 // secure: false の場合
 // HTTP通信でもCookieが送られる → 盗聴される可能性
 
 // secure: true の場合
 // HTTPSのみCookieが送られる → 暗号化されているので安全
-```
+\`\`\`
 
-### sameSite
+本番環境では必ず \`secure: true\` に設定してください。`
+  },
+  {
+    label: "sameSite",
+    content: `**クロスサイトでの送信を制御**
 
-```javascript
+\`\`\`javascript
 // sameSite: 'none' の場合
 // 他サイトからのリクエストでもCookieが送られる → CSRF攻撃に脆弱
 
@@ -251,11 +266,19 @@ document.cookie  // セッションIDは見えない
 
 // sameSite: 'lax' の場合
 // GETのみ他サイトからも許可（リンククリックなど）
-```
+\`\`\`
+
+基本的には \`sameSite: 'strict'\` または \`'lax'\` を使用してください。`
+  }
+]} />
 
 ---
 
 ## セッションハイジャック対策
+
+<Callout type="warning">
+セッションIDが推測可能だったり、盗まれたりすると、なりすましが可能になります。適切な対策が必要です。
+</Callout>
 
 ### セッションIDの推測対策
 
@@ -268,6 +291,18 @@ const sessionId = `session_${Date.now()}`;
 const sessionId = crypto.randomBytes(32).toString('hex');
 // → 推測不可能（暗号学的に安全な乱数）
 ```
+
+<WhyButton title="なぜ暗号学的に安全な乱数が必要？">
+
+**通常の乱数生成では予測される可能性があるから**です。
+
+- `Math.random()` は暗号学的に安全ではない（予測可能なパターンがある）
+- `Date.now()` は時刻から推測できる
+- `crypto.randomBytes()` は予測不可能な乱数を生成
+
+攻撃者がセッションIDのパターンを推測できると、他人のセッションを乗っ取ることができてしまいます。
+
+</WhyButton>
 
 ### セッション固定攻撃対策
 
@@ -338,7 +373,9 @@ app.use((req, res, next) => {
 
 ### 「Cookieは危険」？
 
+<Callout type="info">
 Cookie自体は危険ではありません。**適切に設定すれば安全**です。
+</Callout>
 
 危険なのは：
 - `httpOnly: false` でXSSに脆弱
@@ -346,6 +383,10 @@ Cookie自体は危険ではありません。**適切に設定すれば安全**�
 - `sameSite: 'none'` でCSRFに脆弱
 
 ### 「localStorageに保存すればいい」？
+
+<Callout type="warning">
+セッションIDをlocalStorageに保存するのは推奨されません。
+</Callout>
 
 ```javascript
 // セッションIDをlocalStorageに保存（非推奨）
@@ -356,7 +397,9 @@ localStorage.setItem('sessionId', '...');
 // - 自動送信されない → 毎回手動で送る必要がある
 ```
 
-セッションIDは**httpOnly Cookie**に保存するのが最も安全です。
+<Callout type="tip">
+セッションIDは**httpOnly Cookie**に保存するのが最も安全です。JavaScriptからアクセスできず、自動的にサーバーに送信されます。
+</Callout>
 
 ---
 

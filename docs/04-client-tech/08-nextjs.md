@@ -10,29 +10,33 @@ Next.jsは「全部入りの弁当箱」。必要なものが最初から揃っ�
 
 ## 核心：Next.jsが解決すること
 
-### Reactだけの場合
+```mermaid
+graph TD
+    subgraph "Reactだけ"
+    A1[ルーティング<br/>react-router] --> A7[自分で統合]
+    A2[SSR<br/>自分で設定] --> A7
+    A3[API<br/>Express別プロジェクト] --> A7
+    A4[画像最適化<br/>別ツール] --> A7
+    A5[ビルド<br/>webpack設定] --> A7
+    A6[デプロイ<br/>自分で設定] --> A7
+    end
 
-```
-必要なものを自分で選んで設定:
-├── ルーティング → react-router
-├── サーバーサイドレンダリング → 自分で設定
-├── APIエンドポイント → Express + 別プロジェクト
-├── 画像最適化 → 別ツール
-├── ビルド設定 → webpack
-└── デプロイ → 自分で設定
+    subgraph "Next.js"
+    B1[ルーティング<br/>ファイルベース] --> B7[最初から統合済み]
+    B2[SSR<br/>組み込み] --> B7
+    B3[API<br/>app/api] --> B7
+    B4[画像最適化<br/>next/image] --> B7
+    B5[ビルド<br/>自動] --> B7
+    B6[デプロイ<br/>Vercel簡単] --> B7
+    end
+
+    style A7 fill:#fce4ec
+    style B7 fill:#e1f5e1
 ```
 
-### Next.jsなら
-
-```
-最初から全部入り:
-├── ルーティング → ファイルベース
-├── サーバーサイドレンダリング → 組み込み
-├── APIエンドポイント → app/api
-├── 画像最適化 → next/image
-├── ビルド設定 → 不要
-└── デプロイ → Vercelで簡単
-```
+<Callout type="success">
+**Next.jsの利点**: 必要な機能が最初から揃っているため、設定に時間を取られず、開発に集中できます。
+</Callout>
 
 ---
 
@@ -131,22 +135,73 @@ export default function About() {
 
 ### 動的ルート
 
+URLの一部が変わるページを作りたいときは、ファイル名を `[パラメータ名]` にします。
+
+```text
+なぜ動的ルートが必要？
+
+ブログ記事のページを考えてみましょう:
+├── /blog/hello-world     → 記事「hello-world」を表示
+├── /blog/my-first-post   → 記事「my-first-post」を表示
+└── /blog/nextjs-tips     → 記事「nextjs-tips」を表示
+
+毎回ファイルを作るのは大変...
+→ [slug] という「変数」を使えば1ファイルで対応できる！
+```
+
 ```tsx
 // src/app/blog/[slug]/page.tsx
+//              ↑ [slug] がURLの変わる部分を受け取る
+
 interface Props {
-  params: { slug: string };
+  params: { slug: string };  // ← Next.jsが自動で渡してくれる
 }
 
 export default function BlogPost({ params }: Props) {
+  // params.slug にURLの値が入っている
   return (
     <article>
       <h1>記事: {params.slug}</h1>
     </article>
   );
 }
+```
 
-// /blog/hello-world → params.slug = "hello-world"
-// /blog/my-first-post → params.slug = "my-first-post"
+```text
+paramsの仕組み:
+
+ファイル: src/app/blog/[slug]/page.tsx
+                        ↑ この部分が変数名になる
+
+URL: /blog/hello-world
+          └─────────┘
+             ↓
+params = { slug: "hello-world" }
+
+URL: /blog/my-first-post
+          └────────────┘
+             ↓
+params = { slug: "my-first-post" }
+```
+
+**複数のパラメータも使える**:
+
+```tsx
+// src/app/users/[userId]/posts/[postId]/page.tsx
+
+interface Props {
+  params: {
+    userId: string;   // /users/の後ろ
+    postId: string;   // /posts/の後ろ
+  };
+}
+
+export default function UserPost({ params }: Props) {
+  // URL: /users/123/posts/456
+  // → params.userId = "123"
+  // → params.postId = "456"
+  return <div>ユーザー{params.userId}の投稿{params.postId}</div>;
+}
 ```
 
 ### レイアウト
@@ -194,15 +249,53 @@ export default function DashboardLayout({
 
 ## Server Components と Client Components
 
+<Callout type="info">
+**Next.jsの最重要概念**: Server ComponentsとClient Componentsの違いを理解することが、Next.js App Routerを使いこなす鍵です。
+</Callout>
+
+### 例え話：レストランの厨房とテーブル
+
+レストランで料理を提供する2つの方法を考えてみましょう。
+
+- **厨房で調理して出す（Server Component）**: シェフが厨房で料理を完成させ、お客さんには出来上がった料理だけを出す
+- **テーブルで調理する（Client Component）**: 焼肉やしゃぶしゃぶのように、お客さんのテーブルで調理する
+
+```text
+Server Component（厨房 = サーバー）:
+┌─────────────────────────────────────┐
+│  1. データベースから材料を取得        │
+│  2. HTMLという「料理」を完成させる    │
+│  3. 完成品をブラウザに送る            │
+└─────────────────────────────────────┘
+        ↓ 完成したHTMLを送信
+┌─────────────────────────────────────┐
+│  ブラウザ: 受け取って表示するだけ     │
+└─────────────────────────────────────┘
+
+Client Component（テーブル = ブラウザ）:
+┌─────────────────────────────────────┐
+│  サーバー: JavaScriptコードを送る     │
+└─────────────────────────────────────┘
+        ↓ コードを送信
+┌─────────────────────────────────────┐
+│  ブラウザ:                           │
+│  1. JavaScriptを実行                 │
+│  2. ボタンクリックなどに反応         │
+│  3. 画面を動的に更新                 │
+└─────────────────────────────────────┘
+```
+
 ### Server Components（デフォルト）
 
-サーバーで実行され、HTMLとして送られる。
+Next.jsでは、何も指定しなければ **Server Component** になります。サーバーで実行され、完成したHTMLがブラウザに送られます。
 
 ```tsx
 // src/app/users/page.tsx
-// デフォルトはServer Component
+// デフォルトはServer Component（何も書かなくてOK）
 
 async function getUsers() {
+  // この処理はサーバーで実行される
+  // → APIキーなどの秘密情報を安全に使える
   const res = await fetch('https://api.example.com/users');
   return res.json();
 }
@@ -220,42 +313,114 @@ export default async function UsersPage() {
 }
 ```
 
+**Server Componentのメリット**:
+- データベースに直接アクセスできる
+- APIキーなどの秘密情報を安全に扱える
+- ブラウザに送るJavaScriptが少なくて済む（ページ表示が速い）
+- SEO（検索エンジン対策）に有利
+
 ### Client Components
 
-ブラウザで実行される。useState, useEffectなどを使う場合に必要。
+ブラウザで動く処理が必要な場合は **Client Component** を使います。ファイルの先頭に `'use client'` と書くだけです。
 
 ```tsx
 // src/components/Counter.tsx
-'use client';  // ← これを付けるとClient Component
+'use client';  // ← この1行を追加するとClient Component
 
 import { useState } from 'react';
 
 export function Counter() {
+  // useState はブラウザで動く機能なので 'use client' が必要
   const [count, setCount] = useState(0);
 
   return (
     <div>
       <p>カウント: {count}</p>
+      {/* onClick もブラウザで動く */}
       <button onClick={() => setCount(count + 1)}>+1</button>
     </div>
   );
 }
 ```
 
-### 使い分け
+**Client Componentが必要な場面**:
+- `useState`, `useEffect` などのReact Hooksを使う
+- `onClick`, `onChange` などのイベント処理
+- `localStorage`, `window` などのブラウザAPIを使う
 
+### どちらを使うべき？判断フローチャート
+
+```mermaid
+graph TD
+    A[その処理は何をする?] --> B{種類は?}
+
+    B -->|データベースアクセス| C[Server Component]
+    B -->|APIキー・秘密情報| C
+    B -->|単に表示するだけ| C
+
+    B -->|ボタンクリック| D["Client Component<br>#39;use client#39;"]
+    B -->|useState/useEffect| D
+    B -->|localStorage/window| D
+
+    style C fill:#e1f5e1
+    style D fill:#fff3e0
 ```
-Server Component（デフォルト）:
-├── データ取得
-├── バックエンドリソースへのアクセス
-├── 秘密情報を使う処理
-└── 大きな依存関係を使う処理
 
-Client Component（'use client'）:
-├── useState, useEffect を使う
-├── イベントハンドラ（onClick など）
-├── ブラウザAPIを使う
-└── カスタムフックを使う
+<Callout type="tip">
+**判断の基準**: デフォルトはServer Component。ユーザーのインタラクションが必要な場合のみClient Componentを使います。
+</Callout>
+
+### 組み合わせて使う
+
+実際のアプリでは、Server ComponentとClient Componentを組み合わせて使います。
+
+```tsx
+// src/app/posts/page.tsx（Server Component）
+import { LikeButton } from '@/components/LikeButton';
+
+// このページ自体はServer Component
+export default async function PostsPage() {
+  // サーバーでデータ取得
+  const posts = await fetch('https://api.example.com/posts').then(r => r.json());
+
+  return (
+    <ul>
+      {posts.map(post => (
+        <li key={post.id}>
+          <h2>{post.title}</h2>
+          {/* Client Componentを埋め込む */}
+          <LikeButton postId={post.id} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+```tsx
+// src/components/LikeButton.tsx（Client Component）
+'use client';
+
+import { useState } from 'react';
+
+export function LikeButton({ postId }: { postId: number }) {
+  const [liked, setLiked] = useState(false);
+
+  return (
+    <button onClick={() => setLiked(!liked)}>
+      {liked ? '❤️' : '🤍'}
+    </button>
+  );
+}
+```
+
+```text
+この構成のポイント:
+├── ページ全体: Server Component（データ取得を担当）
+└── いいねボタン: Client Component（クリック処理を担当）
+
+→ 必要な部分だけClient Componentにすることで、
+   ページ表示が速く、かつインタラクティブな機能も実現
 ```
 
 ---
@@ -482,31 +647,176 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 ## よくある誤解
 
-### 「全部Client Componentにすればいい」？
+<Accordion title="「全部Client Componentにすればいい」は本当？">
+**いいえ、間違いです。** Server Componentをできるだけ使いましょう。
 
-Server Componentの方が:
-- 初回読み込みが速い
-- JavaScriptバンドルが小さい
-- SEOに有利
+| 項目 | Server Component | Client Component |
+|------|-----------------|------------------|
+| 初回表示速度 | 速い | 遅い |
+| JavaScriptサイズ | 小さい | 大きい |
+| SEO | 有利 | 不利 |
+| 秘密情報 | 安全に扱える | 扱えない |
 
-必要なところだけClient Componentにします。
+```text
+正しい考え方:
+├── 基本は Server Component（何も書かない）
+└── useState や onClick が必要な部分だけ Client Component
 
-### 「APIルートは必須」？
+× 「動くから全部 'use client' つけちゃえ」
+○ 「本当に必要な部分だけ 'use client' をつける」
+```
 
-Server Componentから直接DBにアクセスできます。
+<Callout type="warning">
+**パフォーマンス警告**: 全てをClient Componentにすると、大量のJavaScriptがブラウザに送られ、初回表示が遅くなります。
+</Callout>
+</Accordion>
+
+<Accordion title="「'use client' をつけないと動かない」は本当？">
+**いいえ、逆です。** デフォルトで動くのが Server Component です。
 
 ```tsx
-// APIルート不要のパターン
+// これは Server Component（'use client' 不要）
+export default function AboutPage() {
+  return <h1>このサイトについて</h1>;  // 普通に動く
+}
+```
+
+`'use client'` が必要なのは、**ブラウザでしか動かない機能**を使うときだけです。
+
+```tsx
+// useState を使うので 'use client' が必要
+'use client';
+import { useState } from 'react';
+
+export function Counter() {
+  const [count, setCount] = useState(0);  // ← これがブラウザ機能
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+</Accordion>
+
+<Accordion title="「Server ComponentでuseStateが使えない → バグ？」は本当？">
+**いいえ、仕様です。** `useState` はブラウザで動く機能なので、Server Component では使えません。
+
+```tsx
+// ❌ エラーになる
+export default function Page() {
+  const [count, setCount] = useState(0);  // Server Componentでは使えない
+  return <div>{count}</div>;
+}
+```
+
+```tsx
+// ✅ 正しい方法1: Client Componentにする
+'use client';
+
+export default function Page() {
+  const [count, setCount] = useState(0);  // OK
+  return <div>{count}</div>;
+}
+```
+
+```tsx
+// ✅ 正しい方法2: useStateが必要な部分だけ分離
+// page.tsx（Server Component）
+import { Counter } from './Counter';
+
+export default function Page() {
+  return (
+    <div>
+      <h1>カウンター</h1>
+      <Counter />  {/* Client Componentを埋め込む */}
+    </div>
+  );
+}
+
+// Counter.tsx（Client Component）
+'use client';
+import { useState } from 'react';
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+</Accordion>
+
+<Accordion title="「APIルートは必須」は本当？">
+**いいえ、多くの場合不要です。** Server Componentから直接DBにアクセスできます。APIルートを作らなくていいケースが多いです。
+
+```tsx
+// ✅ APIルート不要のパターン
 export default async function UsersPage() {
-  const users = await db.user.findMany();  // 直接DB
+  // Server Componentなので、直接DBにアクセスできる
+  const users = await db.user.findMany();
   return <UserList users={users} />;
 }
 ```
 
-APIルートが必要なのは:
-- クライアントからの呼び出し
-- 外部サービスからのWebhook
-- 認証が必要なエンドポイント
+**APIルートが必要なのは**:
+
+| 場面 | 理由 |
+|------|------|
+| Client Componentからデータ取得 | Client Componentから直接DBにアクセスできないため |
+| フォーム送信後の処理 | ボタンクリック後にサーバーで処理を実行したい |
+| 外部サービスからのWebhook | Stripeの決済通知などを受け取るため |
+| 他のアプリからの呼び出し | モバイルアプリなど別のクライアントからアクセスするため |
+</Accordion>
+
+<Accordion title="「app/ と pages/ どっちを使うべき？」">
+**app/ を使ってください。** これが最新の方式（App Router）です。
+
+```mermaid
+graph LR
+    A[Next.jsのルーティング] --> B[App Router<br/>app/]
+    A --> C[Pages Router<br/>pages/]
+
+    B --> B1[Server Components]
+    B --> B2[レイアウト簡単]
+    B --> B3[新規プロジェクト推奨]
+
+    C --> C1[全てClient Component]
+    C --> C2[getServerSideProps必要]
+    C --> C3[非推奨]
+
+    style B fill:#e1f5e1
+    style C fill:#fce4ec
+```
+
+古い記事やチュートリアルでは Pages Router の書き方が載っていることがあるので注意してください。
+
+<Callout type="tip">
+**新規プロジェクトはApp Routerで**: Next.js 13以降はApp Routerが標準です。Pages Routerは後方互換性のために残されています。
+</Callout>
+</Accordion>
+
+<Accordion title="「fetch のキャッシュがよくわからない」">
+Next.jsの `fetch` は自動でキャッシュされます。これを理解しておかないと「データが更新されない！」と困ることがあります。
+
+```tsx
+// 毎回最新データを取得（キャッシュしない）
+const data = await fetch(url, { cache: 'no-store' });
+
+// ビルド時だけ取得（ずっと同じデータ）
+const data = await fetch(url, { cache: 'force-cache' });
+
+// 60秒ごとに新しいデータを取得
+const data = await fetch(url, { next: { revalidate: 60 } });
+```
+
+```text
+どれを使う？
+
+├─ ユーザー情報など常に最新が必要
+│   └─→ { cache: 'no-store' }
+│
+├─ 会社概要など滅多に変わらない
+│   └─→ { cache: 'force-cache' }（デフォルト）
+│
+└─ ニュースなど定期的に更新される
+    └─→ { next: { revalidate: 60 } }（60秒ごと）
+```
+</Accordion>
 
 ---
 
@@ -521,9 +831,73 @@ APIルートが必要なのは:
 
 ---
 
+## 初心者向けガイド
+
+### 最初の一歩
+
+1. **プロジェクトを作成する**
+   ```bash
+   npx create-next-app@latest my-first-app
+   # 質問には全部 Yes で OK
+   ```
+
+2. **起動してブラウザで確認**
+   ```bash
+   cd my-first-app
+   npm run dev
+   # http://localhost:3000 を開く
+   ```
+
+3. **src/app/page.tsx を編集してみる**
+   - 保存すると自動で画面が更新される
+
+### 覚える優先順位
+
+```text
+最初に覚える（必須）:
+├── ファイルベースルーティング（page.tsx を作る = ページができる）
+├── Server Component（デフォルト、普通に書けばOK）
+└── Client Component（'use client' + useState/onClick）
+
+次に覚える:
+├── layout.tsx（共通レイアウト）
+├── 動的ルート（[id] を使ったURL）
+└── Link コンポーネント（ページ遷移）
+
+必要になったら覚える:
+├── APIルート（app/api）
+├── loading.tsx / error.tsx
+├── メタデータ（SEO対策）
+└── 画像最適化（next/image）
+```
+
+### 困ったときのチェックリスト
+
+| 症状 | 原因 | 解決方法 |
+|------|------|---------|
+| useState が使えない | Server Component だから | `'use client'` を追加 |
+| ページが表示されない | ファイル名が違う | `page.tsx` か確認 |
+| データが更新されない | キャッシュされている | `{ cache: 'no-store' }` を追加 |
+| 画像が表示されない | public/ にない | public/ フォルダに画像を置く |
+| ビルドでエラー | 型エラーなど | `npm run build` のエラーを確認 |
+
+### 学習リソース
+
+```text
+公式ドキュメント:
+└── https://nextjs.org/docs
+
+おすすめの学習順序:
+1. 公式チュートリアル（https://nextjs.org/learn）
+2. 簡単なブログを作ってみる
+3. データベース連携（Prisma + Supabase）
+4. 認証追加（NextAuth.js）
+```
+
+---
+
 ## サンプルコード
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
 - [Next.js App Routerサンプル](/samples/client/07-nextjs-app-router) - レイアウト / Server Components / Client Components / API Routes
-

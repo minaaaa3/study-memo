@@ -25,6 +25,13 @@
 
 ## 同じボタンを4つの方式で作る
 
+<Callout type="info">
+**比較してみよう**: 同じボタンを4つの異なる方式で実装して、それぞれの特徴を理解しましょう。
+</Callout>
+
+<Tabs>
+<TabItem value="vanilla" label="素のCSS">
+
 ### 素のCSS
 
 ```css
@@ -65,6 +72,9 @@ function Button({ variant = 'primary', disabled, children }) {
 
 **問題**: クラス名が衝突する可能性、ファイルを行き来する必要
 
+</TabItem>
+<TabItem value="modules" label="CSSモジュール">
+
 ### CSSモジュール
 
 ```css
@@ -99,6 +109,9 @@ function Button({ variant = 'primary', disabled, children }) {
 
 **良い点**: クラス名の衝突なし、CSSの書き方そのまま
 
+</TabItem>
+<TabItem value="styled" label="CSS-in-JS">
+
 ### CSS-in-JS（styled-components）
 
 ```jsx
@@ -132,6 +145,9 @@ function Button({ variant = 'primary', disabled, children }) {
 
 **良い点**: propsで動的にスタイル変更、ファイル1つで完結
 
+</TabItem>
+<TabItem value="tailwind" label="Tailwind CSS">
+
 ### Tailwind CSS
 
 ```jsx
@@ -155,6 +171,9 @@ function Button({ variant = 'primary', disabled, children }) {
 ```
 
 **良い点**: CSSファイル不要、クラス名を見ればスタイルがわかる
+
+</TabItem>
+</Tabs>
 
 ---
 
@@ -480,22 +499,33 @@ function LoginForm() {
 
 ## 選び方
 
+```mermaid
+graph TD
+    A[スタイリング方式の選択] --> B{Next.js App Router?}
+    B -->|Yes| C[Tailwind CSS推奨]
+    B -->|No| D{要件は?}
+
+    D -->|シンプルに始めたい| E[CSSモジュール]
+    D -->|動的スタイルが多い| F[styled-components]
+    D -->|高速開発したい| G[Tailwind CSS]
+    D -->|完成UIが欲しい| H[MUI/shadcn/ui]
+
+    style C fill:#e1f5e1
+    style E fill:#e3f2fd
+    style F fill:#fff3e0
+    style G fill:#e1f5e1
+    style H fill:#fce4ec
 ```
-「シンプルに始めたい」「小規模」
-  → CSSモジュール
 
-「動的なスタイルが多い」「コンポーネント単位で管理」
-  → styled-components / Emotion
+<Callout type="tip">
+**選択のガイドライン**:
 
-「高速に開発」「デザインシステムを統一」
-  → Tailwind CSS
-
-「すぐに使えるUIが欲しい」「プロトタイプ」
-  → MUI / shadcn/ui
-
-「Next.js App Router」
-  → Tailwind CSS（CSS-in-JSはサーバーコンポーネントと相性が悪い）
-```
+- **シンプルに始めたい・小規模** → CSSモジュール
+- **動的なスタイルが多い・コンポーネント単位で管理** → styled-components / Emotion
+- **高速に開発・デザインシステムを統一** → Tailwind CSS
+- **すぐに使えるUIが欲しい・プロトタイプ** → MUI / shadcn/ui
+- **Next.js App Router** → Tailwind CSS（CSS-in-JSはサーバーコンポーネントと相性が悪い）
+</Callout>
 
 ---
 
@@ -537,9 +567,8 @@ function LoginForm() {
 
 ## よくある誤解
 
-### 「Tailwindはインラインスタイルと同じ」？
-
-違います。
+<Accordion title="「Tailwindはインラインスタイルと同じ」は本当？">
+**いいえ、全く違います。**
 
 ```html
 <!-- インラインスタイル -->
@@ -552,11 +581,11 @@ function LoginForm() {
   設計されたシステム、hover対応、レスポンシブ対応
 </div>
 ```
+</Accordion>
 
-### 「CSS-in-JSは遅い」？
-
-最近のライブラリはランタイムコストを最小化しています。
-ただし、パフォーマンスが非常に重要な場合はTailwindの方が有利です。
+<Accordion title="「CSS-in-JSは遅い」は本当？">
+**昔は遅かったですが、最近のライブラリは改善されています。** 最近のライブラリはランタイムコストを最小化しています。ただし、パフォーマンスが非常に重要な場合はTailwindの方が有利です。
+</Accordion>
 
 ---
 

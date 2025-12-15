@@ -16,6 +16,15 @@
 
 ### なぜ必要か
 
+<Callout type="warning">
+**環境変数を使う理由**
+
+コードに直接秘密情報を書くと：
+- GitHubに公開されたらパスワード漏洩
+- 開発環境と本番環境で設定を変えられない
+- セキュリティリスクが高い
+</Callout>
+
 ```javascript
 // ダメな例: コードに直接書く
 const DATABASE_URL = 'postgres://user:password@localhost:5432/mydb';
@@ -69,23 +78,36 @@ console.log(process.env.DATABASE_URL);
 !.env.example
 ```
 
+<Callout type="warning">
+**.envファイルは絶対にコミットしない**
+
+`.env`ファイルには秘密情報が含まれています。必ず`.gitignore`に追加してください。
+
+代わりに`.env.example`というテンプレートファイルを作成し、チームで共有しましょう。
+</Callout>
+
 ---
 
 ## Docker
 
 ### なぜ必要か
 
-```
-「私のPCでは動くのに...」問題:
+<WhyButton title="なぜDockerが必要？">
+
+**「私のPCでは動くのに...」問題を解決**
+
+よくある問題：
 - Node.jsのバージョンが違う
 - 依存ライブラリのバージョンが違う
-- OSが違う
+- OSが違う（macOS vs Linux vs Windows）
 
-Dockerなら:
+Dockerなら：
 - 全員同じ環境で動かせる
 - 「この設定で動く」がファイルに残る
 - 本番環境と同じ環境で開発できる
-```
+- 環境を簡単に再現できる
+
+</WhyButton>
 
 ### Dockerfile
 
@@ -331,17 +353,20 @@ npm install
 
 ### 「.env.localを共有すればいい」？
 
-```
-ダメな理由:
-- 秘密情報がSlackなどに残る
+<Callout type="warning">
+**.envファイルを共有してはいけない**
+
+ダメな理由：
+- 秘密情報がSlackやメールに残る
 - 更新があったとき追従が大変
 - 環境によって値が違う
+- セキュリティリスクが高い
 
-正しい方法:
-- .env.example をGitで共有
+正しい方法：
+- `.env.example` をGitで共有（値は空にする）
 - 実際の値は各自で設定
-- 本番の秘密情報はCI/CDのSecretsに
-```
+- 本番の秘密情報はCI/CDのSecretsに保存
+</Callout>
 
 ---
 

@@ -46,7 +46,14 @@ console.log('リクエスト送信済み');
 
 ## コールバック → Promise → async/await
 
-### 1. コールバック（昔の書き方）
+<Callout type="info">
+**非同期処理の進化**: JavaScriptの非同期処理は時代と共に進化してきました。それぞれの方式を理解しましょう。
+</Callout>
+
+<Tabs>
+<TabItem value="callback" label="1. コールバック (昔)">
+
+### コールバック（昔の書き方）
 
 ```javascript
 function fetchUser(id, callback) {
@@ -69,7 +76,10 @@ fetchUser(1, (user) => {
 });
 ```
 
-### 2. Promise（ES6）
+</TabItem>
+<TabItem value="promise" label="2. Promise (ES6)">
+
+### Promise（ES6）
 
 ```javascript
 function fetchUser(id) {
@@ -99,7 +109,10 @@ fetchUser(1)
 // チェーンできるので読みやすい
 ```
 
-### 3. async/await（ES2017）
+</TabItem>
+<TabItem value="async" label="3. async/await (ES2017)">
+
+### async/await（ES2017）
 
 ```javascript
 async function loadData() {
@@ -121,6 +134,13 @@ loadData();
 
 // 同期処理のように読める！
 ```
+
+<Callout type="success">
+**推奨**: 現代の開発では async/await を使いましょう。コードが読みやすく、エラーハンドリングも簡単です。
+</Callout>
+
+</TabItem>
+</Tabs>
 
 ---
 
@@ -262,6 +282,35 @@ function UserList() {
 
 ## 並列と直列
 
+```mermaid
+sequenceDiagram
+    participant Code as コード
+    participant API1 as API (User)
+    participant API2 as API (Posts)
+    participant API3 as API (Comments)
+
+    Note over Code,API3: 直列実行 (3秒)
+    Code->>API1: fetchUser
+    API1-->>Code: 1秒
+    Code->>API2: fetchPosts
+    API2-->>Code: 1秒
+    Code->>API3: fetchComments
+    API3-->>Code: 1秒
+
+    Note over Code,API3: 並列実行 (1秒)
+    par 同時実行
+        Code->>API1: fetchUser
+        Code->>API2: fetchPosts
+        Code->>API3: fetchComments
+    end
+    API1-->>Code: 1秒
+    API2-->>Code: 1秒
+    API3-->>Code: 1秒
+```
+
+<Tabs>
+<TabItem value="serial" label="直列（遅い）">
+
 ### 直列（順番に実行）
 
 ```javascript
@@ -271,6 +320,11 @@ const posts = await fetchPosts(1);    // 1秒
 const comments = await fetchComments(1); // 1秒
 // 合計: 3秒
 ```
+
+**特徴**: 順番に実行されるので遅いが、前の結果が必要な場合は仕方ない
+
+</TabItem>
+<TabItem value="parallel" label="並列（速い）">
 
 ### 並列（同時に実行）
 
@@ -283,6 +337,11 @@ const [user, posts, comments] = await Promise.all([
 ]);
 // 合計: 1秒（最も遅いものの時間）
 ```
+
+**特徴**: 同時に実行されるので速い。依存関係がない場合は並列にする
+
+</TabItem>
+</Tabs>
 
 ### 依存関係がある場合
 
@@ -390,10 +449,8 @@ useEffect(() => {
 
 ## よくある誤解
 
-### 「awaitを付ければ同期になる」？
-
-そうではありません。awaitは「その行の完了を待つ」だけで、
-他の処理（UIの更新など）はブロックしません。
+<Accordion title="「awaitを付ければ同期になる」は本当？">
+**いいえ、違います。** awaitは「その行の完了を待つ」だけで、他の処理（UIの更新など）はブロックしません。
 
 ```javascript
 async function fetchData() {
@@ -410,8 +467,10 @@ console.log('3. 関数呼び出し後');
 // 3. 関数呼び出し後  ← awaitで止まらない
 // 2. 完了
 ```
+</Accordion>
 
-### 「useEffect内でasyncを直接使える」？
+<Accordion title="「useEffect内でasyncを直接使える」は本当？">
+**いいえ、使えません。**
 
 ```jsx
 // ダメな例
@@ -429,6 +488,7 @@ useEffect(() => {
 ```
 
 useEffectのコールバックはクリーンアップ関数を返すことがあるため、Promiseを返すasync関数は使えません。
+</Accordion>
 
 ---
 
