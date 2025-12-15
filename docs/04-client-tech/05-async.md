@@ -441,3 +441,11 @@ useEffectのコールバックはクリーンアップ関数を返すことが�
 - **Promise.all** = 並列実行
 - **TanStack Query** = データフェッチングの状態管理
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [非同期処理デモ](https://github.com/minaaaa3/study-memo/tree/main/samples/client/01-async) - コールバック → Promise → async/await → Promise.all の進化を体験
+

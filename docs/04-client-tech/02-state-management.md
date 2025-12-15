@@ -384,3 +384,11 @@ function MyComponent() {
 - **TanStack Query** = サーバー状態に
 - **選び方** = 規模と用途に合わせて
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [状態管理デモ（React）](https://github.com/minaaaa3/study-memo/tree/main/samples/client/02-state-management) - useState / Context / Zustand / Redux を切り替えて比較できるアプリ
+

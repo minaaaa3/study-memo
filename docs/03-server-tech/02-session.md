@@ -368,3 +368,11 @@ localStorage.setItem('sessionId', '...');
 - **セッションデータ** = サーバー側（メモリ、Redis、DB）に保存
 - **ストレージの選択** = 小規模ならメモリ、大規模ならRedis
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [セッション認証サーバー](https://github.com/minaaaa3/study-memo/tree/main/samples/server/04-session-auth) - 登録・ログイン・ログアウトの完全な実装
+

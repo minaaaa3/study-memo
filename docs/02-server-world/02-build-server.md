@@ -452,3 +452,13 @@ curl -X DELETE http://localhost:3000/api/users/1
 - **環境変数**: 設定をコードの外に出す仕組み
 - **CRUD**: Create（POST）、Read（GET）、Update（PUT）、Delete（DELETE）
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [素のNode.jsサーバー](https://github.com/minaaaa3/study-memo/tree/main/samples/server/01-raw-node) - 依存なしで即実行可能
+- [Express基本](https://github.com/minaaaa3/study-memo/tree/main/samples/server/02-express-basic) - シンプルなExpressサーバー
+- [完全なCRUD API](https://github.com/minaaaa3/study-memo/tree/main/samples/server/03-crud-api) - バリデーション付きの実用的なAPI
+
