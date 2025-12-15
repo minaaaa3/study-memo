@@ -340,3 +340,11 @@ const decrypted = decryptSensitiveData(encrypted);
 - **機密データは暗号化** = AES-256などを使う
 - **自作禁止** = 必ず実績のあるライブラリを使う
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [ハッシュと暗号化サンプル](/samples/server/09-hash-encryption) - SHA-256 / bcryptパスワード / AES暗号化
+

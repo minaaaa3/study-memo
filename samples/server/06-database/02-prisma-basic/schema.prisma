@@ -1,0 +1,60 @@
+// Prismaスキーマファイル
+// npx prisma migrate dev で実際のDBに反映
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"  // 開発用。本番ではpostgresqlに変更
+  url      = "file:./dev.db"
+}
+
+// ユーザーモデル
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // リレーション（次のサンプルで詳しく）
+  posts Post[]
+
+  @@map("users")  // テーブル名をスネークケースに
+}
+
+// 投稿モデル
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?  // ?はNULL許容
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 外部キー
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
+
+  @@map("posts")
+}
+
+/*
+ * よく使う型:
+ * - String   : 文字列
+ * - Int      : 整数
+ * - Float    : 浮動小数点
+ * - Boolean  : true/false
+ * - DateTime : 日時
+ * - Json     : JSONデータ（PostgreSQLのみ）
+ *
+ * 修飾子:
+ * - @id            : 主キー
+ * - @unique        : ユニーク制約
+ * - @default()     : デフォルト値
+ * - @updatedAt     : 更新時に自動更新
+ * - ?              : NULL許容
+ * - @map("name")   : DBのカラム名を指定
+ * - @@map("name")  : DBのテーブル名を指定
+ */

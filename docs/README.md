@@ -51,6 +51,7 @@
 | 3-3 | [JWT（トークン認証）](./03-server-tech/03-jwt.md) | セッションとの違い、仕組み、使いどころ |
 | 3-4 | [ハッシュと暗号化](./03-server-tech/04-hash-encryption.md) | パスワードはなぜハッシュ化する？暗号化との違い |
 | 3-5 | [HTTPS と証明書](./03-server-tech/05-https.md) | なぜHTTPSが必要か、証明書の役割 |
+| 3-6 | [キャッシュ](./03-server-tech/06-cache.md) | ブラウザ/CDN/Redisキャッシュ、Cache-Control、無効化 |
 
 ### 第4部: クライアントサイドの技術
 
@@ -78,6 +79,7 @@
 | 5-3 | [CI/CD](./05-dev-support/03-ci-cd.md) | 自動化で何が嬉しいのか |
 | 5-4 | [環境構築](./05-dev-support/04-environment.md) | Docker、環境変数、設定ファイル |
 | 5-5 | [デバッグ](./05-dev-support/05-debugging.md) | 問題の切り分け方、ツールの使い方 |
+| 5-6 | [クラウドコンピューティング](./05-dev-support/06-cloud.md) | IaaS/PaaS/SaaS、AWS/GCP/Azure、サーバーレス |
 
 ### 第6部: 実装演習
 

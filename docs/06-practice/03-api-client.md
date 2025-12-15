@@ -285,9 +285,99 @@ const mutation = useMutation({
 
 ---
 
+## よくある誤解
+
+### 「全部TanStack Queryで書けばいい」？
+
+TanStack Queryは**サーバー状態の管理**に特化しています。
+
+```javascript
+// 良い使い方：サーバーからのデータ
+const { data: users } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+
+// 不要な使い方：ローカルの状態
+// → useStateやZustandの方が適切
+const { data: isModalOpen } = useQuery({ ... }); // ❌
+const [isModalOpen, setIsModalOpen] = useState(false); // ✅
+```
+
+### 「fetchで十分」？
+
+小規模なら十分ですが、以下の場合はTanStack Queryの恩恵が大きい：
+
+- 同じデータを複数コンポーネントで使う（キャッシュ）
+- ローディング/エラー状態の管理が面倒
+- データの自動更新が必要
+- 楽観的更新をしたい
+
+### 「Axiosは必須」？
+
+fetchでほとんどのケースは対応できます。Axiosが必要なのは：
+
+- リクエスト/レスポンスのインターセプター
+- タイムアウト設定
+- ブラウザ互換性（古いブラウザ対応）
+
+---
+
+## まとめ
+
+- **素のfetch**: 単純だが毎回同じコードを書く必要がある
+- **自前ラッパー**: 共通処理をまとめて再利用可能に
+- **TanStack Query**: キャッシュ、自動再取得、状態管理を自動化
+- **使い分け**: 規模と要件に応じて選択
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [APIクライアント比較サンプル](/samples/practice/02-api-client-comparison) - 素のfetch / Axios / TanStack Query の比較
+
+---
+
+## セットアップ
+
+```bash
+# TanStack Queryのインストール
+npm install @tanstack/react-query
+
+# 開発ツール（オプション）
+npm install @tanstack/react-query-devtools
+```
+
+```jsx
+// app/providers.jsx
+'use client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <ReactQueryDevtools />
+    </QueryClientProvider>
+  );
+}
+```
+
+---
+
 ## 演習
 
 1. 自前ラッパーでCRUD APIを叩く
 2. TanStack Queryに書き換える
-3. キャッシュの動作を確認する
+3. キャッシュの動作を確認する（DevToolsで確認）
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [CRUD APIサーバー](https://github.com/minaaaa3/study-memo/tree/main/samples/server/03-crud-api) - APIクライアントのテスト用サーバー
 

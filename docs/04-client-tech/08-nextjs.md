@@ -519,3 +519,11 @@ APIルートが必要なのは:
 - **APIルート** = app/api にファイルを作る
 - **Image, Link** = 最適化された組み込みコンポーネント
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [Next.js App Routerサンプル](/samples/client/07-nextjs-app-router) - レイアウト / Server Components / Client Components / API Routes
+

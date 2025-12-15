@@ -474,3 +474,11 @@ Pub/Sub:
 - **Message Queue** = 非同期処理のためのキュー
 - **Pub/Sub** = 1対多のメッセージ配信
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [Push型通信サンプル](/samples/server/07-push-communication) - Polling / SSE / WebSocket の比較実装
+

@@ -409,6 +409,94 @@ export default function Page() {
 
 ---
 
+## よくある誤解
+
+### 「最初から完璧に作らないといけない」？
+
+**段階的に作るのが正解**です。
+
+```
+良い進め方:
+1. 最小限の機能で動くものを作る（MVP）
+2. 実際に使ってみる
+3. 問題点を発見する
+4. 改善する
+5. 2-4を繰り返す
+
+悪い進め方:
+1. 完璧な設計を目指す
+2. 全機能を一度に実装しようとする
+3. 複雑になりすぎて挫折
+```
+
+### 「ライブラリをたくさん使えば良いアプリになる」？
+
+**必要なものだけ使う**のが正解です。
+
+```javascript
+// 過剰な例（小規模アプリには不要）
+- Redux + Redux Saga + Reselect + Immer
+- Axios + React Query + SWR
+- Formik + Yup + React Hook Form
+
+// 適切な例（このメモアプリの場合）
+- Zustand（シンプルな状態管理）
+- TanStack Query（サーバー状態）
+- React Hook Form + Zod（フォーム）
+```
+
+### 「コンポーネントは細かく分けるほど良い」？
+
+**適度な粒度**が大切です。
+
+```jsx
+// 細かすぎる例
+<MemoCard>
+  <MemoCardHeader>
+    <MemoCardTitle />
+    <MemoCardDate />
+  </MemoCardHeader>
+  <MemoCardBody>
+    <MemoCardContent />
+  </MemoCardBody>
+  <MemoCardFooter>
+    <MemoCardDeleteButton />
+  </MemoCardFooter>
+</MemoCard>
+
+// 適切な例
+<MemoCard memo={memo} onDelete={handleDelete} />
+```
+
+### 「型定義は面倒だから後回し」？
+
+**最初から定義する**方が結果的に早いです。
+
+```typescript
+// 型を先に定義すると...
+interface Memo {
+  id: string;
+  title: string;
+  content: string;
+}
+
+// エディタが補完してくれる
+// 間違った使い方をすると即座にエラー
+// リファクタリングも安全
+```
+
+---
+
+## まとめ
+
+- **段階的に作る**: MVP → 改善の繰り返し
+- **技術選定**: 規模に合ったライブラリを選ぶ
+- **状態の分類**: UI状態（Zustand）とサーバー状態（TanStack Query）を分ける
+- **型定義**: 最初から定義して開発効率を上げる
+- **コンポーネント設計**: 適度な粒度で分割
+
+---
+
 ## おわりに
 
 このメモアプリは「最小限の実装」です。
@@ -417,3 +505,11 @@ export default function Page() {
 
 しかし、ここまでの学習で「何が起きているか」は理解できるようになっているはずです。
 わからないことがあれば、各章に戻って復習してください。
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [ミニアプリサンプル](/samples/practice/04-mini-app) - Express + React + TanStack Query の統合例（Todoアプリ）

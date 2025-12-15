@@ -1,0 +1,54 @@
+/* 素のCSS */
+.button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #2563eb;
+}
+
+.button-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.button-secondary:hover {
+  background-color: #4b5563;
+}
+
+.button-outline {
+  background-color: transparent;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+}
+
+.button-outline:hover {
+  background-color: #eff6ff;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.button-lg {
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+/* 問題: 他のファイルで .button を定義すると衝突する */

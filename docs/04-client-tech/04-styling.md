@@ -23,6 +23,154 @@
 
 ---
 
+## 同じボタンを4つの方式で作る
+
+### 素のCSS
+
+```css
+/* button.css */
+.button {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.button:hover {
+  background-color: #2563eb;
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.button-secondary {
+  background-color: #6b7280;
+}
+.button-secondary:hover {
+  background-color: #4b5563;
+}
+```
+
+```jsx
+import './button.css';
+
+function Button({ variant = 'primary', disabled, children }) {
+  const className = variant === 'secondary'
+    ? 'button button-secondary'
+    : 'button';
+  return <button className={className} disabled={disabled}>{children}</button>;
+}
+```
+
+**問題**: クラス名が衝突する可能性、ファイルを行き来する必要
+
+### CSSモジュール
+
+```css
+/* Button.module.css */
+.button {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+.button:hover { background-color: #2563eb; }
+.secondary { background-color: #6b7280; }
+.secondary:hover { background-color: #4b5563; }
+```
+
+```jsx
+import styles from './Button.module.css';
+import clsx from 'clsx';
+
+function Button({ variant = 'primary', disabled, children }) {
+  return (
+    <button
+      className={clsx(styles.button, variant === 'secondary' && styles.secondary)}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+}
+```
+
+**良い点**: クラス名の衝突なし、CSSの書き方そのまま
+
+### CSS-in-JS（styled-components）
+
+```jsx
+import styled from 'styled-components';
+
+const StyledButton = styled.button`
+  padding: 8px 16px;
+  background-color: ${props => props.$secondary ? '#6b7280' : '#3b82f6'};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${props => props.$secondary ? '#4b5563' : '#2563eb'};
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+function Button({ variant = 'primary', disabled, children }) {
+  return (
+    <StyledButton $secondary={variant === 'secondary'} disabled={disabled}>
+      {children}
+    </StyledButton>
+  );
+}
+```
+
+**良い点**: propsで動的にスタイル変更、ファイル1つで完結
+
+### Tailwind CSS
+
+```jsx
+import clsx from 'clsx';
+
+function Button({ variant = 'primary', disabled, children }) {
+  return (
+    <button
+      className={clsx(
+        'px-4 py-2 rounded text-white',
+        variant === 'primary' && 'bg-blue-500 hover:bg-blue-600',
+        variant === 'secondary' && 'bg-gray-500 hover:bg-gray-600',
+        disabled && 'opacity-50 cursor-not-allowed'
+      )}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+}
+```
+
+**良い点**: CSSファイル不要、クラス名を見ればスタイルがわかる
+
+---
+
+## コード量の比較
+
+| 方式 | JSファイル | CSSファイル | 合計行数 |
+|------|-----------|------------|----------|
+| 素のCSS | 5行 | 20行 | 25行 |
+| CSSモジュール | 10行 | 10行 | 20行 |
+| CSS-in-JS | 20行 | 0行 | 20行 |
+| Tailwind | 15行 | 0行 | 15行 |
+
+**結論**: どれが「正解」ではなく、チームやプロジェクトに合った方法を選ぶ
+
+---
+
 ## 素のCSS
 
 ### グローバルCSS
@@ -419,4 +567,12 @@ function LoginForm() {
 - **Tailwind** = ユーティリティクラス。高速開発
 - **UIライブラリ** = 完成済みコンポーネント
 - **選び方** = プロジェクトの規模と要件に合わせて
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [スタイリング比較サンプル](/samples/client/06-styling) - vanilla CSS / CSS Modules / styled-components / Tailwind CSS
 

@@ -1,0 +1,115 @@
+// リレーションを含むPrismaスキーマ
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// === 1対多（One-to-Many）===
+// 1人のユーザーが複数の投稿を持つ
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  // リレーション
+  posts    Post[]    // 1人のユーザー → 複数の投稿
+  comments Comment[] // 1人のユーザー → 複数のコメント
+  profile  Profile?  // 1人のユーザー → 1つのプロフィール（任意）
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // 外部キー
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // リレーション
+  comments Comment[]
+  tags     TagsOnPosts[]
+}
+
+// === 1対1（One-to-One）===
+// 1人のユーザーに1つのプロフィール
+
+model Profile {
+  id     Int     @id @default(autoincrement())
+  bio    String?
+  avatar String?
+
+  // 外部キー（ユニーク制約で1対1を保証）
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// === 1対多（もう1つの例）===
+// 1つの投稿に複数のコメント
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+
+  // 投稿への外部キー
+  postId Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // ユーザーへの外部キー
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+// === 多対多（Many-to-Many）===
+// 投稿とタグの関係
+
+model Tag {
+  id    Int           @id @default(autoincrement())
+  name  String        @unique
+  posts TagsOnPosts[]
+}
+
+// 中間テーブル（明示的な多対多）
+model TagsOnPosts {
+  postId Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  tagId Int
+  tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@id([postId, tagId]) // 複合主キー
+}
+
+/*
+ * リレーションの種類:
+ *
+ * 1対1 (One-to-One):
+ *   - 片方に @unique な外部キー
+ *   - 例: User - Profile
+ *
+ * 1対多 (One-to-Many):
+ *   - 「多」側に外部キー
+ *   - 例: User - Post（1人のユーザーが複数投稿）
+ *
+ * 多対多 (Many-to-Many):
+ *   - 中間テーブルを使用
+ *   - 暗黙的 vs 明示的（上記は明示的）
+ *   - 例: Post - Tag
+ *
+ * onDelete オプション:
+ *   - Cascade: 親削除時に子も削除
+ *   - SetNull: 親削除時にNULLに
+ *   - Restrict: 子がある場合は削除不可（デフォルト）
+ */

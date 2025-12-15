@@ -389,3 +389,11 @@ function TodoList() {
 2. Zustandに書き換える
 3. どちらが管理しやすいか比較する
 
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [状態管理比較サンプル](/samples/practice/01-state-comparison) - useState / useReducer / Context / Zustand の比較
+

@@ -331,9 +331,88 @@ return (
 
 ---
 
+## よくある誤解
+
+### 「React Hook Formは複雑」？
+
+実際は**素のuseStateより簡単**です。
+
+```jsx
+// useState版: 10行以上のボイラープレート
+const [values, setValues] = useState({});
+const [errors, setErrors] = useState({});
+const [touched, setTouched] = useState({});
+const handleChange = (e) => { ... };
+const handleBlur = (e) => { ... };
+const validate = () => { ... };
+
+// RHF版: 3行
+const { register, handleSubmit, formState: { errors } } = useForm();
+```
+
+### 「バリデーションはフロントだけでいい」？
+
+**絶対にサーバーでもバリデーションが必要**です。
+
+```javascript
+// フロントのバリデーションは簡単に回避できる
+// DevToolsで直接APIを叩けばスキップされる
+
+// サーバー側でも必ずチェック
+app.post('/api/users', (req, res) => {
+  const result = userSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.errors });
+  }
+  // ...
+});
+```
+
+### 「Zodはフロントエンド専用」？
+
+Zodは**サーバーでも使える**ので、スキーマを共通化できます。
+
+```typescript
+// shared/schemas.ts（フロント/バック共通）
+export const userSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+```
+
+---
+
+## まとめ
+
+- **useState**: シンプルだがフィールド増加で破綻
+- **React Hook Form**: 再レンダリング最小、状態管理自動化
+- **Zod**: 宣言的バリデーション、型推論
+- **RHF + Zod**: 最強の組み合わせ（推奨）
+- **フロント・サーバー両方でバリデーション**
+
+---
+
+## セットアップ
+
+```bash
+# React Hook Form + Zod
+npm install react-hook-form zod @hookform/resolvers
+```
+
+---
+
 ## 演習
 
 1. useStateで登録フォームを作る
 2. React Hook Form + Zodに書き換える
 3. フィールド追加時のコード量を比較する
+4. サーバーサイドでも同じZodスキーマでバリデーション
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [フォーム比較サンプル](/samples/practice/03-form-comparison) - 素のuseState / React Hook Form / RHF+Zod の比較
 

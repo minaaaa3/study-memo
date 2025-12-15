@@ -476,6 +476,131 @@ staleTime: 30 * 1000,   // 30秒間はキャッシュを信用
 staleTime: Infinity,    // 手動更新まで再取得しない
 ```
 
+### 「useEffectでfetchすれば十分」？
+
+シンプルなケースならOKですが、**実際のアプリでは不十分**です。
+
+```jsx
+// useEffectでやろうとすると...
+useEffect(() => {
+  let cancelled = false;
+  setLoading(true);
+  fetch('/api/users')
+    .then(res => res.json())
+    .then(data => {
+      if (!cancelled) setUsers(data);
+    })
+    .catch(err => {
+      if (!cancelled) setError(err);
+    })
+    .finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+  return () => { cancelled = true; };
+}, []);
+
+// 考慮すべきこと:
+// - キャンセル処理
+// - キャッシュ
+// - 再取得のタイミング
+// - エラーリトライ
+// - 他コンポーネントとのデータ共有
+// → 全部自分で書く？
+```
+
+### 「queryKeyは単純な文字列でいい」？
+
+**配列やオブジェクトを活用**すると便利です。
+
+```jsx
+// 悪い例: 文字列連結
+queryKey: [`users-${userId}`]  // 部分マッチが効かない
+
+// 良い例: 配列で構造化
+queryKey: ['users', userId]
+queryKey: ['users', userId, 'posts']
+queryKey: ['users', { status: 'active', page: 1 }]
+
+// invalidateQueriesで部分マッチできる
+queryClient.invalidateQueries({ queryKey: ['users'] })
+// → ['users'], ['users', 1], ['users', 1, 'posts'] 全部無効化
+```
+
+### 「キャッシュは自分で管理すべき」？
+
+TanStack Queryが**自動で管理**してくれます。
+
+```jsx
+// 自分で管理しようとすると...
+const cache = new Map();  // グローバル変数
+const CACHE_TIME = 5 * 60 * 1000;
+
+function fetchWithCache(key, fetcher) {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TIME) {
+    return cached.data;
+  }
+  // ... 複雑なロジック
+}
+
+// TanStack Queryなら
+useQuery({
+  queryKey: ['users'],
+  queryFn: fetchUsers,
+  staleTime: 5 * 60 * 1000,  // これだけ
+});
+```
+
+### 「エラーハンドリングは毎回書く」？
+
+**グローバル設定**が可能です。
+
+```jsx
+// QueryClientでデフォルト設定
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 60 * 1000,
+      // グローバルエラーハンドラ
+      onError: (error) => {
+        toast.error(`エラー: ${error.message}`);
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        toast.error(`保存に失敗: ${error.message}`);
+      },
+    },
+  },
+});
+
+// 個別のuseQueryではエラーハンドリング不要になる
+const { data } = useQuery({
+  queryKey: ['users'],
+  queryFn: fetchUsers,
+  // onErrorを書かなくてもグローバルで処理される
+});
+```
+
+### 「ローディング状態は1種類」？
+
+TanStack Queryは**複数の状態**を提供します。
+
+```jsx
+const {
+  isLoading,       // 初回読み込み中
+  isFetching,      // 再取得中（キャッシュ表示しつつバックグラウンドで取得）
+  isRefetching,    // 明示的な再取得中
+  isPending,       // データがまだない
+  isStale,         // キャッシュが古い
+} = useQuery({ ... });
+
+// 使い分け
+if (isLoading) return <Spinner />;           // 初回のみ
+if (isFetching) return <SmallIndicator />;   // バックグラウンド更新中
+```
+
 ---
 
 ## まとめ
@@ -486,4 +611,12 @@ staleTime: Infinity,    // 手動更新まで再取得しない
 - **useMutation** = データ更新
 - **キャッシュ** = 自動管理、必要に応じて無効化
 - **DevTools** = デバッグに便利
+
+---
+
+## サンプルコード
+
+この章の内容を実際に動かして試せるサンプルコードを用意しています。
+
+- [データフェッチングサンプル](/samples/client/04-data-fetching) - 基本fetch / TanStack Query / Mutation / キャッシュ制御
 

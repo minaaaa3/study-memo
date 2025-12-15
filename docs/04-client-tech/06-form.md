@@ -624,5 +624,5 @@ app.post('/users', (req, res) => {
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [フォームバリデーションデモ（React）](https://github.com/minaaaa3/study-memo/tree/main/samples/client/03-form-validation) - 素のReact / Zod / React Hook Form / RHF + Zod を切り替えて比較できるアプリ
+- [フォーム比較サンプル](/samples/practice/03-form-comparison) - 素のuseState / React Hook Form / RHF+Zod の比較
 
