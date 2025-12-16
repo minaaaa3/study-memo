@@ -22,10 +22,11 @@ interface AnnotationPopoverProps {
   slug: string;
   position: Position | null;
   mode: 'create' | 'view';
-  onClose: () => void;
+  onClose: (keepHighlight?: boolean) => void;
+  onColorChange?: (color: string) => void;
 }
 
-export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationPopoverProps) {
+export function AnnotationPopover({ slug, position, mode, onClose, onColorChange }: AnnotationPopoverProps) {
   const {
     currentSelection,
     activeAnnotation,
@@ -38,6 +39,14 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
 
   const [comment, setComment] = useState('');
   const [selectedColor, setSelectedColor] = useState('yellow');
+
+  // 色変更時にコールバックを呼び出す
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+    if (onColorChange) {
+      onColorChange(color);
+    }
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -144,7 +153,8 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
     setIsSubmitting(false);
     if (result) {
       clearSelection();
-      onClose();
+      // 保存成功時はハイライトを維持（useEffectで永続化される）
+      onClose(true);
     }
   };
 
@@ -177,7 +187,7 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
   const handleClose = () => {
     clearSelection();
     setActiveAnnotation(null);
-    onClose();
+    onClose(false);
   };
 
   return (
@@ -205,14 +215,6 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
         </button>
       </div>
 
-      {/* Selected text preview */}
-      <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-        <p className="text-xs text-gray-500 mb-1">選択テキスト:</p>
-        <p className="text-sm text-gray-700 line-clamp-2">
-          {mode === 'create' ? currentSelection?.text : activeAnnotation?.selectedText}
-        </p>
-      </div>
-
       {/* Comment input/display */}
       <div className="p-3">
         {mode === 'create' || isEditing ? (
@@ -234,7 +236,7 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
             {COLORS.map((color) => (
               <button
                 key={color.name}
-                onClick={() => setSelectedColor(color.name)}
+                onClick={() => handleColorChange(color.name)}
                 className={`w-6 h-6 rounded-full ${color.bg} ${color.hover} ${
                   selectedColor === color.name ? 'ring-2 ring-offset-1 ring-gray-400' : ''
                 }`}

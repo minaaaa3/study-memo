@@ -16,6 +16,48 @@ interface PopoverState {
   mode: 'create' | 'view';
 }
 
+// 一時的なハイライトを作成
+function createTemporaryHighlight(range: Range, color: string): HTMLElement | null {
+  try {
+    const highlight = document.createElement('mark');
+    highlight.className = `annotation-highlight annotation-${color} temporary-highlight`;
+    range.surroundContents(highlight);
+    return highlight;
+  } catch {
+    // Range may cross element boundaries
+    return null;
+  }
+}
+
+// 一時的なハイライトを削除
+function removeTemporaryHighlight(container: HTMLElement) {
+  const highlights = container.querySelectorAll('.temporary-highlight');
+  highlights.forEach((highlight) => {
+    const parent = highlight.parentNode;
+    if (parent) {
+      while (highlight.firstChild) {
+        parent.insertBefore(highlight.firstChild, highlight);
+      }
+      parent.removeChild(highlight);
+    }
+  });
+}
+
+// 一時的なハイライトの色を変更
+function updateTemporaryHighlightColor(container: HTMLElement, newColor: string) {
+  const highlight = container.querySelector('.temporary-highlight');
+  if (highlight) {
+    // 既存の色クラスを削除
+    highlight.classList.forEach((cls) => {
+      if (cls.startsWith('annotation-') && cls !== 'annotation-highlight') {
+        highlight.classList.remove(cls);
+      }
+    });
+    // 新しい色クラスを追加
+    highlight.classList.add(`annotation-${newColor}`);
+  }
+}
+
 // Get text context around selection
 function getSelectionContext(range: Range, contextLength: number = 50): { prefix: string; suffix: string } {
   const container = range.commonAncestorContainer;
@@ -195,24 +237,43 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
         range: range.cloneRange(),
       });
 
-      // 親要素からの相対位置を計算
+      // 一時的なハイライトを作成（デフォルト黄色）
+      createTemporaryHighlight(range, 'yellow');
+
+      // 選択を解除
+      selection.removeAllRanges();
+
+      // 親要素からの相対位置を計算（ハイライト作成後に再取得）
+      const highlightElement = contentRef.current!.querySelector('.temporary-highlight');
+      const highlightRect = highlightElement?.getBoundingClientRect() || rect;
       const containerRect = contentRef.current!.getBoundingClientRect();
       setPopover({
         isOpen: true,
         position: {
-          top: rect.bottom - containerRect.top + 8,
-          left: rect.left + rect.width / 2 - containerRect.left,
+          top: highlightRect.bottom - containerRect.top + 8,
+          left: highlightRect.left + highlightRect.width / 2 - containerRect.left,
         },
         mode: 'create',
       });
     }, 10);
   }, [isAuthenticated, setCurrentSelection]);
 
-  const handleClosePopover = useCallback(() => {
+  const handleClosePopover = useCallback((keepHighlight?: boolean) => {
+    // 保存成功時以外は一時的なハイライトを削除
+    if (!keepHighlight && contentRef.current) {
+      removeTemporaryHighlight(contentRef.current);
+    }
     setPopover({ isOpen: false, position: null, mode: 'create' });
     setCurrentSelection(null);
     setActiveAnnotation(null);
   }, [setCurrentSelection, setActiveAnnotation]);
+
+  // 色変更時のコールバック
+  const handleColorChange = useCallback((color: string) => {
+    if (contentRef.current) {
+      updateTemporaryHighlightColor(contentRef.current, color);
+    }
+  }, []);
 
   return (
     <div
@@ -228,6 +289,7 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
           position={popover.position}
           mode={popover.mode}
           onClose={handleClosePopover}
+          onColorChange={popover.mode === 'create' ? handleColorChange : undefined}
         />
       )}
     </div>
