@@ -137,11 +137,13 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
       if (contentRef.current) {
         highlightAnnotation(contentRef.current, annotation, (ann, rect) => {
           setActiveAnnotation(ann);
+          // 親要素からの相対位置を計算
+          const containerRect = contentRef.current!.getBoundingClientRect();
           setPopover({
             isOpen: true,
             position: {
-              top: rect.bottom + window.scrollY + 8,
-              left: rect.left + rect.width / 2 + window.scrollX,
+              top: rect.bottom - containerRect.top + 8,
+              left: rect.left + rect.width / 2 - containerRect.left,
             },
             mode: 'view',
           });
@@ -193,11 +195,13 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
         range: range.cloneRange(),
       });
 
+      // 親要素からの相対位置を計算
+      const containerRect = contentRef.current!.getBoundingClientRect();
       setPopover({
         isOpen: true,
         position: {
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + rect.width / 2 + window.scrollX,
+          top: rect.bottom - containerRect.top + 8,
+          left: rect.left + rect.width / 2 - containerRect.left,
         },
         mode: 'create',
       });
@@ -211,14 +215,12 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
   }, [setCurrentSelection, setActiveAnnotation]);
 
   return (
-    <>
-      <div
-        ref={contentRef}
-        onMouseUp={handleMouseUp}
-        className="annotatable-content"
-      >
-        {children}
-      </div>
+    <div
+      ref={contentRef}
+      onMouseUp={handleMouseUp}
+      className="annotatable-content relative"
+    >
+      {children}
 
       {popover.isOpen && (
         <AnnotationPopover
@@ -228,6 +230,6 @@ export function AnnotatableContent({ slug, children }: AnnotatableContentProps) 
           onClose={handleClosePopover}
         />
       )}
-    </>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   PolarRadiusAxis,
   Radar,
   ResponsiveContainer,
-  Legend,
+  Tooltip,
 } from 'recharts';
 import { useProgress } from '@/contexts/ProgressContext';
 
@@ -108,7 +108,8 @@ export default function ProgressPage() {
 
   // レーダーチャート用データ
   const radarData = partProgress.map((p) => ({
-    subject: p.part.name,
+    subject: `第${p.part.id}部`,
+    fullName: p.part.name,
     progress: p.percentage,
     fullMark: 100,
   }));
@@ -168,25 +169,41 @@ export default function ProgressPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">スキルレーダー</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
+              <RadarChart data={radarData} outerRadius="75%">
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={{ fill: '#374151', fontSize: 12 }}
+                  tick={{ fill: '#374151', fontSize: 11 }}
                 />
                 <PolarRadiusAxis
                   angle={90}
                   domain={[0, 100]}
-                  tick={{ fill: '#9ca3af', fontSize: 10 }}
+                  tick={{ fill: '#9ca3af', fontSize: 9 }}
+                  tickCount={5}
                 />
                 <Radar
                   name="学習進捗"
                   dataKey="progress"
                   stroke="#3B82F6"
+                  strokeWidth={2}
                   fill="#3B82F6"
-                  fillOpacity={0.5}
+                  fillOpacity={0.4}
+                  dot={{ r: 4, fill: '#3B82F6', strokeWidth: 0 }}
                 />
-                <Legend />
+                <Tooltip
+                  content={({ payload }) => {
+                    if (payload && payload.length > 0) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="font-medium text-gray-900">{data.fullName}</p>
+                          <p className="text-sm text-blue-600">{data.progress}% 完了</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>

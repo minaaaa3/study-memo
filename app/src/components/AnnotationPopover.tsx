@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useAnnotations, Annotation } from '@/contexts/AnnotationContext';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAnnotations } from '@/contexts/AnnotationContext';
 
 interface Position {
   top: number;
   left: number;
 }
+
+const POPOVER_WIDTH = 320; // w-80 = 20rem = 320px
 
 const COLORS = [
   { name: 'yellow', bg: 'bg-yellow-200', hover: 'hover:bg-yellow-300' },
@@ -80,6 +82,50 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
     };
   }, [onClose]);
 
+  // 画面端からはみ出さないように位置を調整
+  const getAdjustedPosition = useCallback(() => {
+    if (!position || !popoverRef.current) return { top: position?.top ?? 0, left: position?.left ?? 0 };
+
+    const popoverRect = popoverRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let adjustedLeft = position.left;
+    let adjustedTop = position.top;
+
+    // 左端からはみ出す場合
+    const leftEdge = popoverRect.left;
+    if (leftEdge < 8) {
+      adjustedLeft = position.left + (8 - leftEdge);
+    }
+
+    // 右端からはみ出す場合
+    const rightEdge = popoverRect.right;
+    if (rightEdge > viewportWidth - 8) {
+      adjustedLeft = position.left - (rightEdge - viewportWidth + 8);
+    }
+
+    // 下端からはみ出す場合（上に表示）
+    const bottomEdge = popoverRect.bottom;
+    if (bottomEdge > viewportHeight - 8) {
+      // popoverの高さ分 + 選択テキストの高さ分上にずらす
+      adjustedTop = position.top - popoverRect.height - 40;
+    }
+
+    return { top: adjustedTop, left: adjustedLeft };
+  }, [position]);
+
+  const [adjustedPosition, setAdjustedPosition] = useState(position);
+
+  useEffect(() => {
+    if (position && popoverRef.current) {
+      // 初回レンダリング後に位置を調整
+      requestAnimationFrame(() => {
+        setAdjustedPosition(getAdjustedPosition());
+      });
+    }
+  }, [position, getAdjustedPosition]);
+
   if (!position) return null;
 
   const handleCreate = async () => {
@@ -137,10 +183,10 @@ export function AnnotationPopover({ slug, position, mode, onClose }: AnnotationP
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 w-80"
+      className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 w-80"
       style={{
-        top: position.top,
-        left: position.left,
+        top: adjustedPosition?.top ?? position.top,
+        left: adjustedPosition?.left ?? position.left,
         transform: 'translateX(-50%)',
       }}
     >
