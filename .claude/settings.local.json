@@ -20,7 +20,8 @@
       "Bash(curl:*)",
       "Bash(node /Users/inouechiharu/Desktop/study-memo/app/scripts/generate-icons.mjs:*)",
       "Bash(node:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(done)"
     ]
   }
 }

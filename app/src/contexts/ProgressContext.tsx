@@ -47,23 +47,7 @@ export function ProgressProvider({ children, initialSession, initialProgress }: 
       return false;
     }
 
-    // Optimistic update - immediately update the UI
-    setProgress((prev) => {
-      const existing = prev.find((p) => p.slug === slug);
-      if (existing) {
-        return prev.map((p) =>
-          p.slug === slug
-            ? { ...p, completed, completedAt: completed ? new Date().toISOString() : null }
-            : p
-        );
-      }
-      return [
-        ...prev,
-        { slug, completed, completedAt: completed ? new Date().toISOString() : null },
-      ];
-    });
-
-    // Then send the request to the server
+    // サーバーにリクエストを送信し、成功した場合のみUIを更新
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
@@ -77,35 +61,27 @@ export function ProgressProvider({ children, initialSession, initialProgress }: 
           await handleAuthError();
           return false;
         }
-        // Revert on failure
-        setProgress((prev) => {
-          const existing = prev.find((p) => p.slug === slug);
-          if (existing) {
-            return prev.map((p) =>
-              p.slug === slug
-                ? { ...p, completed: !completed, completedAt: !completed ? new Date().toISOString() : null }
-                : p
-            );
-          }
-          return prev.filter((p) => p.slug !== slug);
-        });
         return false;
       }
-      return true;
-    } catch (error) {
-      console.error('Failed to update progress:', error);
-      // Revert on error
+
+      // サーバーからの応答が成功した場合のみUIを更新
       setProgress((prev) => {
         const existing = prev.find((p) => p.slug === slug);
         if (existing) {
           return prev.map((p) =>
             p.slug === slug
-              ? { ...p, completed: !completed, completedAt: !completed ? new Date().toISOString() : null }
+              ? { ...p, completed, completedAt: completed ? new Date().toISOString() : null }
               : p
           );
         }
-        return prev.filter((p) => p.slug !== slug);
+        return [
+          ...prev,
+          { slug, completed, completedAt: completed ? new Date().toISOString() : null },
+        ];
       });
+      return true;
+    } catch (error) {
+      console.error('Failed to update progress:', error);
       return false;
     }
   };

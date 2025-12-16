@@ -51,9 +51,24 @@ export function Navigation({ sections }: NavigationProps) {
     <nav className="space-y-2">
       {/* 進捗サマリー（ログイン時のみ表示） */}
       {isAuthenticated && (
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+        <Link href="/progress" className="block mb-4 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-blue-900">学習進捗</span>
+            <span className="text-sm font-medium text-blue-900 group-hover:text-blue-700">
+              学習進捗
+              <svg
+                className="inline-block w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </span>
             <span className="text-sm text-blue-700">{completedCount}/{totalChapters}</span>
           </div>
           <div className="w-full bg-blue-200 rounded-full h-2">
@@ -63,7 +78,7 @@ export function Navigation({ sections }: NavigationProps) {
             />
           </div>
           <p className="text-xs text-blue-600 mt-1">{progressPercent}% 完了</p>
-        </div>
+        </Link>
       )}
 
       {sections.map((section) => (
