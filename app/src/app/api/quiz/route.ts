@@ -61,6 +61,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ユーザーがDBに存在するか確認
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'ユーザーが見つかりません。再ログインしてください。' },
+        { status: 401 }
+      );
+    }
+
     const result = await prisma.quizResult.create({
       data: {
         userId: session.user.id,

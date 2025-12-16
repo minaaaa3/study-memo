@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
 
 export interface Progress {
@@ -28,11 +29,18 @@ interface ProgressProviderProps {
 
 export function ProgressProvider({ children, initialSession, initialProgress }: ProgressProviderProps) {
   const { data: session } = useSession();
+  const router = useRouter();
   const currentSession = session ?? initialSession;
   const userId = currentSession?.user?.id;
 
   // サーバーから取得した初期データを使用
   const [progress, setProgress] = useState<Progress[]>(initialProgress);
+
+  // 401エラー時にログアウトしてログイン画面へ遷移
+  const handleAuthError = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/signin');
+  };
 
   const toggleProgress = async (slug: string, completed: boolean) => {
     if (!userId) {
@@ -64,6 +72,11 @@ export function ProgressProvider({ children, initialSession, initialProgress }: 
       });
 
       if (!response.ok) {
+        // 401エラーの場合はログイン画面へ遷移
+        if (response.status === 401) {
+          await handleAuthError();
+          return false;
+        }
         // Revert on failure
         setProgress((prev) => {
           const existing = prev.find((p) => p.slug === slug);

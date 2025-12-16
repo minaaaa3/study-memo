@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAllDocs } from '@/lib/docs';
 import { buildNavigation } from '@/lib/navigation';
+import { TableOfContents } from '@/components/TableOfContents';
 
 export default function Home() {
   const docs = getAllDocs();
@@ -59,27 +60,7 @@ export default function Home() {
       {/* 目次 */}
       <section className="py-12 border-t border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">目次</h2>
-        <div className="space-y-8">
-          {sections.map((section) => (
-            <div key={section.part}>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                {section.title}
-              </h3>
-              <ul className="grid md:grid-cols-2 gap-2">
-                {section.items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block p-3 border rounded hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                    >
-                      <span className="text-gray-900">{item.title}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        <TableOfContents sections={sections} />
       </section>
 
       {/* 推奨学習順序 */}
