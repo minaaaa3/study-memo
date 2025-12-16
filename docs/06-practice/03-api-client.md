@@ -561,7 +561,7 @@ Axios は：
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [APIクライアント比較サンプル](/samples/practice/02-api-client-comparison) - 素のfetch / Axios / TanStack Query の比較
+- [APIクライアント比較サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/practice/02-api-client-comparison) - 素のfetch / Axios / TanStack Query の比較
 
 ---
 

@@ -603,5 +603,5 @@ graph TD
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [スタイリング比較サンプル](/samples/client/06-styling) - vanilla CSS / CSS Modules / styled-components / Tailwind CSS
+- [スタイリング比較サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/client/06-styling) - vanilla CSS / CSS Modules / styled-components / Tailwind CSS
 

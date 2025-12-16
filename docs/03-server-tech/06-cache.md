@@ -588,4 +588,4 @@ console.log(await redis.get("test")); // "Hello Redis!"
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [キャッシュ戦略サンプル](/samples/server/08-cache) - インメモリ / Redis / HTTPキャッシュヘッダー
+- [キャッシュ戦略サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/server/08-cache) - インメモリ / Redis / HTTPキャッシュヘッダー

@@ -439,5 +439,5 @@ const decrypted = decryptSensitiveData(encrypted);
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [ハッシュと暗号化サンプル](/samples/server/09-hash-encryption) - SHA-256 / bcryptパスワード / AES暗号化
+- [ハッシュと暗号化サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/server/09-hash-encryption) - SHA-256 / bcryptパスワード / AES暗号化
 

@@ -731,5 +731,5 @@ app.post('/api/users', (req, res) => {
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [フォーム比較サンプル](/samples/practice/03-form-comparison) - 素のuseState / React Hook Form / RHF+Zod の比較
+- [フォーム比較サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/practice/03-form-comparison) - 素のuseState / React Hook Form / RHF+Zod の比較
 

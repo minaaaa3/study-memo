@@ -475,5 +475,5 @@ Next.jsなどは「プリフェッチ」で遷移も速くしています。
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [ルーティングサンプル](/samples/client/05-routing) - 基本 / ネスト / 動的ルート / 認証保護 / ナビゲーション
+- [ルーティングサンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/client/05-routing) - 基本 / ネスト / 動的ルート / 認証保護 / ナビゲーション
 

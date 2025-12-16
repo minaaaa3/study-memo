@@ -933,4 +933,4 @@ mindmap
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [ミニアプリサンプル](/samples/practice/04-mini-app) - Express + React + TanStack Query の統合例（Todoアプリ）
+- [ミニアプリサンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/practice/04-mini-app) - Express + React + TanStack Query の統合例（Todoアプリ）

@@ -546,5 +546,5 @@ npx prisma migrate deploy
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [データベース連携サンプル](/samples/server/06-database) - 生SQL / Prisma基本 / リレーション / CRUD API
+- [データベース連携サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/server/06-database) - 生SQL / Prisma基本 / リレーション / CRUD API
 

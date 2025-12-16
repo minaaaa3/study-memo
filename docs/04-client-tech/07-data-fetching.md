@@ -667,5 +667,5 @@ if (isFetching) return <SmallIndicator />;   // バックグラウンド更新�
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [データフェッチングサンプル](/samples/client/04-data-fetching) - 基本fetch / TanStack Query / Mutation / キャッシュ制御
+- [データフェッチングサンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/client/04-data-fetching) - 基本fetch / TanStack Query / Mutation / キャッシュ制御
 

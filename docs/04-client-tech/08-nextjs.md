@@ -900,4 +900,4 @@ const data = await fetch(url, { next: { revalidate: 60 } });
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [Next.js App Routerサンプル](/samples/client/07-nextjs-app-router) - レイアウト / Server Components / Client Components / API Routes
+- [Next.js App Routerサンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/client/07-nextjs-app-router) - レイアウト / Server Components / Client Components / API Routes

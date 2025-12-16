@@ -558,5 +558,5 @@ subscriber.on('message', (channel, message) => {
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [Push型通信サンプル](/samples/server/07-push-communication) - Polling / SSE / WebSocket の比較実装
+- [Push型通信サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/server/07-push-communication) - Polling / SSE / WebSocket の比較実装
 

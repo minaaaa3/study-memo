@@ -662,5 +662,5 @@ React DevTools の Profiler を使うと、どのコンポーネントが再レ�
 
 この章の内容を実際に動かして試せるサンプルコードを用意しています。
 
-- [状態管理比較サンプル](/samples/practice/01-state-comparison) - useState / useReducer / Context / Zustand の比較
+- [状態管理比較サンプル](https://github.com/minaaaa3/study-memo/tree/main/samples/practice/01-state-comparison) - useState / useReducer / Context / Zustand の比較
 
